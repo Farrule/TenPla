@@ -1,9 +1,11 @@
 import json
 import os
 
-from schemas import CompanyFormat, CompanySummary
+from app.schemas import CompanyFormat, CompanySummary
 
-FORMATS_DIR = os.path.join(os.path.dirname(__file__), "formats")
+# backend/formats を参照するようにパスを調整
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+FORMATS_DIR = os.path.join(BASE_DIR, "formats")
 
 
 def list_formats() -> list[CompanySummary]:

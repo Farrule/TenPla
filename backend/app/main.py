@@ -1,7 +1,7 @@
-import format_manager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from schemas import CompanyFormat, CompanySummary
+from app.services import format_manager
+from app.schemas import CompanyFormat, CompanySummary
 
 app = FastAPI(title="DocBridge API", version="0.1.0")
 
@@ -50,4 +50,4 @@ def create_or_update_format(company_format: CompanyFormat):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8000, reload=True)

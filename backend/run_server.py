@@ -8,7 +8,7 @@ import uvicorn
 if getattr(sys, "frozen", False):
     os.chdir(sys._MEIPASS)
 
-from main import app
+from app.main import app
 
 if __name__ == "__main__":
     # ポート8000でFastAPIを起動

@@ -6,3 +6,5 @@ dist
 __pycache__
 README.md
 TODO.md
+tsconfig.node.tsbuildinfo
+tsconfig.tsbuildinfo
