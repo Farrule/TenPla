@@ -1,0 +1,21 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Web Debug (Vite + FastAPI)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "preLaunchTask": "Run All Dev Servers"
+    },
+    {
+      "name": "Tauri App (Tauri + FastAPI)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "echo 'Starting Tauri Desktop App...'",
+      "preLaunchTask": "Run Tauri + Backend"
+    }
+  ]
+}
