@@ -49,7 +49,7 @@ export default function App() {
             <FileSpreadsheet className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-800">DocBridge</h1>
+            <h1 className="text-xl font-bold text-slate-800">TenPla</h1>
             <p className="text-xs text-slate-500">
               PDF to Excel 自動転記システム
             </p>

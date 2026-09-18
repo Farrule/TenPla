@@ -25,7 +25,10 @@ def list_formats() -> list[CompanySummary]:
                     )
             except Exception as e:
                 print(f"Failed to read format file {filename}: {e}")
-    return summaries
+
+    sorted_summaries = sorted(summaries, key=lambda x: x.company_id)
+
+    return sorted_summaries
 
 
 def get_format(company_id: str) -> CompanyFormat | None:

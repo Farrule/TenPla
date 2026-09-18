@@ -1,6 +1,6 @@
 {
-  "company_id": "sample_company",
-  "company_name": "株式会社サンプル商事",
+  "company_id": "sample_2",
+  "company_name": "株式会社サンプル商事_2",
   "rules": [
     {
       "field_name": "請求日",

@@ -22,8 +22,14 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         tesseract-ocr \
         tesseract-ocr-jpn \
         tesseract-ocr-jpn-vert \
+        fonts-noto-cjk \
+        fonts-ipafont \
+        psmisc \
+        lsof \
+        procps \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+    && fc-cache -fv
 
 
 # 将来のTauri化を見据えてvscodeユーザーにRustをセットアップ
