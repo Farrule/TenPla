@@ -4,3 +4,5 @@ dist
 .env.*
 .venv
 __pycache__
+README.md
+TODO.md
