@@ -34,7 +34,9 @@
         "bradlc.vscode-tailwindcss",
         "tamasfe.even-better-toml",
         "rust-lang.rust-analyzer",
-        "tauri-apps.tauri-vscode"
+        "tauri-apps.tauri-vscode",
+        "tomoki1207.pdf",
+        "development42.csv-excel-viewer"
       ]
     }
   },

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -26,3 +26,17 @@ class CompanyFormat(BaseModel):
 class CompanySummary(BaseModel):
     company_id: str
     company_name: str
+
+
+class ExtractedFieldResult(BaseModel):
+    field_name: str
+    excel_cell: str | None = None
+    excel_start_cell: str | None = None
+    method: str
+    value: Any = None  # 文字列またはテーブルの行リスト
+
+
+class ExtractionResponse(BaseModel):
+    company_id: str
+    company_name: str
+    extracted_data: list[ExtractedFieldResult]

@@ -1,22 +1,28 @@
 {
   "company_id": "sample_1",
-  "company_name": "株式会社サンプル商事_1",
+  "company_name": "株式会社サンプル商事",
   "rules": [
     {
-      "field_name": "請求日",
+      "field_name": "請求書番号",
       "excel_cell": "B2",
-      "method": "keyword_after",
-      "keyword": "請求日"
-    },
-    {
-      "field_name": "合計金額",
-      "excel_cell": "D2",
       "method": "regex",
-      "pattern": "合計金額[：:\\s]*([0-9,]+)円?"
+      "pattern": "INV-\\d{4}-\\d{3}"
     },
     {
-      "field_name": "明細行",
-      "excel_start_cell": "A10",
+      "field_name": "請求日",
+      "excel_cell": "B3",
+      "method": "keyword_after",
+      "keyword": "請求日:"
+    },
+    {
+      "field_name": "ご請求金額",
+      "excel_cell": "B4",
+      "method": "keyword_after",
+      "keyword": "ご請求金額"
+    },
+    {
+      "field_name": "明細一覧",
+      "excel_start_cell": "A7",
       "method": "table",
       "table_index": 0
     }
