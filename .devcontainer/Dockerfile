@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/devcontainers/base:bookworm
 
-# PDF解析・画像処理・ビルドツール・Tauri依存ライブラリのインストール
+# PDF解析・画像処理・ビルドツール・Tauri依存ライブラリ・ageのインストール
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get install -y --no-install-recommends \
         python3 \
@@ -27,18 +27,26 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         psmisc \
         lsof \
         procps \
+        age \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
     && fc-cache -fv
 
+# SOPS バイナリのインストール
+ARG SOPS_VERSION="v3.13.3"
+RUN curl -LO "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64" \
+    && mv "sops-${SOPS_VERSION}.linux.amd64" /usr/local/bin/sops \
+    && chmod +x /usr/local/bin/sops
 
-# 将来のTauri化を見据えてvscodeユーザーにRustをセットアップ
 USER vscode
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/home/vscode/.cargo/bin:${PATH}"
 
-# バックエンド仮想環境の作成と reportlab 等のインストール
-# ※ コンテナ内に永続的なベースvenvを用意しておく場合
+# SOPS / age 鍵用ディレクトリの作成と環境変数定義
+ENV SOPS_AGE_KEY_FILE="/home/vscode/.config/sops/age/keys.txt"
+RUN mkdir -p /home/vscode/.config/sops/age
+
+# バックエンド仮想環境の作成と依存関係のインストール
 RUN python3 -m venv /home/vscode/.venv \
     && /home/vscode/.venv/bin/pip install --no-cache-dir --upgrade pip \
     && /home/vscode/.venv/bin/pip install --no-cache-dir \

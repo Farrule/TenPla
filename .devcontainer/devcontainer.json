@@ -3,6 +3,10 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
+  "mounts": [
+    // ホスト側の ~/.config/sops/age をコンテナ内へマウント
+    "source=${localEnv:HOME}${localEnv:USERPROFILE}/.config/sops/age,target=/home/vscode/.config/sops/age,type=bind,consistency=cached"
+  ],
   "features": {
     "ghcr.io/devcontainers/features/node:2.1.0": {
       "version": "20",
@@ -22,7 +26,8 @@
             "source.fixAll": "explicit",
             "source.organizeImports": "explicit"
           }
-        }
+        },
+        "sops.ageKeyPath": "/home/vscode/.config/sops/age/keys.txt"
       },
       "extensions": [
         "ms-python.python",
@@ -36,11 +41,15 @@
         "rust-lang.rust-analyzer",
         "tauri-apps.tauri-vscode",
         "tomoki1207.pdf",
-        "development42.csv-excel-viewer"
+        "development42.csv-excel-viewer",
+        "signageos.signageos-vscode-sops"
       ]
     }
   },
   "forwardPorts": [5173, 8000],
   "postCreateCommand": "bash .devcontainer/post-create.sh",
-  "remoteUser": "vscode"
+  "remoteUser": "vscode",
+  "remoteEnv": {
+    "SOPS_AGE_KEY_FILE": "/home/vscode/.config/sops/age/keys.txt"
+  }
 }
