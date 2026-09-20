@@ -5,7 +5,7 @@
       "label": "Start Backend",
       "type": "shell",
       // ポート 8000 を解放してから sops 経由で Uvicorn を起動
-      "command": "/workspace/backend/.venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+      "command": "(fuser -k 8000/tcp 2>/dev/null || npx --yes kill-port 8000 || true) && /workspace/backend/.venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
       "options": {
         "cwd": "${workspaceFolder}/backend"
       },
@@ -35,7 +35,7 @@
       "label": "Start Frontend",
       "type": "shell",
       // ポート 5173 を解放してから sops 経由で npm run dev を起動
-      "command": "(fuser -k 5173/tcp 2>/dev/null || npx --yes kill-port 5173 || true) && sops exec-env .env.development.enc -- npm run dev",
+      "command": "(fuser -k 5173/tcp 2>/dev/null || npx --yes kill-port 5173 || true) && sops exec-env .env.development.enc \"npm run dev\"",
       "options": {
         "cwd": "${workspaceFolder}/frontend"
       },
@@ -71,7 +71,7 @@
       "label": "Start Tauri Dev",
       "type": "shell",
       // Tauri 起動時も sops 経由で開発用環境変数を注入して起動
-      "command": "(fuser -k 5173/tcp 2>/dev/null || npx --yes kill-port 5173 || true) && sops exec-env .env.development.enc -- npx tauri dev",
+      "command": "(fuser -k 5173/tcp 2>/dev/null || npx --yes kill-port 5173 || true) && sops exec-env .env.development.enc \"npx tauri dev\"",
       "options": {
         "cwd": "${workspaceFolder}/frontend"
       },
