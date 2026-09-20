@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/Farrule/TenPla/compare/v1.0.0...v1.1.0) (2026-09-20)
+
+
+### Features
+
+* format import and export func add ([cebafaa](https://github.com/Farrule/TenPla/commit/cebafaafc63e22b6b1f03adc40893824e5719f31))
+
 ## 1.0.0 (2026-09-20)
 
 
