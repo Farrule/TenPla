@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Trash2, Save, X, Settings2,  } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  Save,
+  X,
+  Settings2,
+  Download,
+  Upload,
+} from "lucide-react";
 import {
   CompanyFormat,
   ExtractionRule,
@@ -98,6 +106,47 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
     });
   };
 
+  const handleExport = () => {
+    try {
+      const dataStr = JSON.stringify(formData, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${formData.company_id || "new"}_format.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError("エクスポートに失敗しました。");
+    }
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const parsed = JSON.parse(content);
+        // 簡単なバリデーション
+        if (typeof parsed !== "object" || !Array.isArray(parsed.rules)) {
+          throw new Error("無効なフォーマットファイルです");
+        }
+        setFormData(parsed);
+        // inputをリセット
+        e.target.value = "";
+        setError(null);
+      } catch (err: any) {
+        setError("ファイルの読み込みに失敗しました: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.company_id.trim()) {
@@ -153,12 +202,37 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
               {companyId ? "フォーマット設定の編集" : "新規フォーマット登録"}
             </h2>
           </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200 transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() =>
+                document.getElementById("import-format-input")?.click()
+              }
+              title="フォーマットをインポート"
+              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+            <input
+              type="file"
+              id="import-format-input"
+              accept=".json"
+              className="hidden"
+              onChange={handleImport}
+            />
+            <button
+              onClick={handleExport}
+              title="フォーマットをエクスポート"
+              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition"
+            >
+              <Upload className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200 transition ml-2"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* フォーム入力エリア */}

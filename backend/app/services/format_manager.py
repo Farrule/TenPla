@@ -1,4 +1,5 @@
 import json
+import sys
 from pathlib import Path
 
 from app.schemas import CompanyFormat, CompanySummary
@@ -9,11 +10,15 @@ class FormatManager:
         if formats_dir:
             self.formats_dir = Path(formats_dir)
         else:
-            # /workspace/backend/app/services/format_manager.py から
-            # /workspace/backend/formats を確実に解決する
-            # parents[0] = services, parents[1] = app, parents[2] = backend
-            base_backend_dir = Path(__file__).resolve().parents[2]
-            self.formats_dir = base_backend_dir / "formats"
+            if getattr(sys, "frozen", False):
+                # PyInstaller環境 (Tauri Sidecar: <インストール先>/binaries/backend-server.exe)
+                # sys.executable の親の親を指すことで、インストールフォルダを基準にする
+                base_dir = Path(sys.executable).resolve().parent.parent
+            else:
+                # 開発環境: /workspace/backend/app/services/format_manager.py -> /workspace/backend
+                base_dir = Path(__file__).resolve().parents[2]
+
+            self.formats_dir = base_dir / "formats"
 
         self._ensure_formats_dir()
 
