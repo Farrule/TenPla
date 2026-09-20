@@ -1,0 +1,25 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          # リポジトリ全体を一つのバージョンとして扱う(Tauri等がある場合はこれが最適)
+          release-type: node
+          
+          # バージョンを更新するファイルを指定
+          extra-files: |
+            frontend/package.json
+            frontend/src-tauri/tauri.conf.json

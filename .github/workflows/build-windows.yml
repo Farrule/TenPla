@@ -1,11 +1,12 @@
 name: Build Windows Application
 
 on:
-  push:
-    branches: [main]
-    tags:
-      - "v*"
+  release:
+    types: [published] # Release Pleaseによってリリースが公開された時にトリガー
   workflow_dispatch: # 手動実行トリガー
+
+permissions:
+  contents: write # Releaseにアセットをアップロードするために必要
 
 jobs:
   build-windows:
@@ -97,3 +98,19 @@ jobs:
             frontend/src-tauri/target/release/bundle/msi/*.msi
             frontend/src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
+
+      # ----------------------------------------------------
+      # 7. GitHub Releases にアップロード
+      # ----------------------------------------------------
+      - name: Upload binaries to Release
+        if: github.event_name == 'release'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # .msi や .exe を見つけてリリースアセットとしてアップロードする
+          for file in frontend/src-tauri/target/release/bundle/msi/*.msi frontend/src-tauri/target/release/bundle/nsis/*.exe; do
+            if [ -f "$file" ]; then
+              gh release upload ${{ github.event.release.tag_name }} "$file"
+            fi
+          done
