@@ -2,6 +2,9 @@ node_modules
 dist
 .env
 .env.*
+!.env.enc
+!*.env.enc
+!*.env.*.enc
 .venv
 __pycache__
 README.md
