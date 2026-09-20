@@ -33,6 +33,22 @@ export const fetchCompanies = async (): Promise<CompanySummary[]> => {
   return res.data;
 };
 
+export interface ExtractionRule {
+  field_name: string;
+  excel_cell?: string | null;
+  excel_start_cell?: string | null;
+  method: "keyword_after" | "regex" | "table";
+  keyword?: string | null;
+  pattern?: string | null;
+  table_index?: number;
+}
+
+export interface CompanyFormat {
+  company_id: string;
+  company_name: string;
+  rules: ExtractionRule[];
+}
+
 // PDFアップロード＆データ抽出
 export const extractPdf = async (
   companyId: string,
@@ -63,4 +79,24 @@ export const exportToExcel = async (
     headers: { "Content-Type": "application/json" },
   });
   return res.data;
+};
+
+// 会社フォーマット詳細の取得
+export const fetchCompanyFormat = async (
+  companyId: string,
+): Promise<CompanyFormat> => {
+  const res = await apiClient.get<CompanyFormat>(`/api/formats/${companyId}`);
+  return res.data;
+};
+
+// 会社フォーマットの新規作成・更新
+export const saveCompanyFormat = async (
+  format: CompanyFormat,
+): Promise<void> => {
+  await apiClient.post("/api/formats", format);
+};
+
+// 会社フォーマットの削除
+export const deleteCompanyFormat = async (companyId: string): Promise<void> => {
+  await apiClient.delete(`/api/formats/${companyId}`);
 };

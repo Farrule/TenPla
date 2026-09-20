@@ -5,19 +5,37 @@
     {
       "field_name": "請求日",
       "excel_cell": "B2",
+      "excel_start_cell": null,
       "method": "keyword_after",
-      "keyword": "請求日"
+      "keyword": "請求日",
+      "pattern": null,
+      "table_index": 0
     },
     {
       "field_name": "合計金額",
       "excel_cell": "D2",
+      "excel_start_cell": null,
       "method": "regex",
-      "pattern": "合計金額[：:\\s]*([0-9,]+)円?"
+      "keyword": null,
+      "pattern": "合計金額[：:\\s]*([0-9,]+)円?",
+      "table_index": 0
     },
     {
       "field_name": "明細行",
+      "excel_cell": null,
       "excel_start_cell": "A10",
-      "method": "table",
+      "method": "regex",
+      "keyword": null,
+      "pattern": null,
+      "table_index": 0
+    },
+    {
+      "field_name": "項目4",
+      "excel_cell": "",
+      "excel_start_cell": "",
+      "method": "keyword_after",
+      "keyword": "",
+      "pattern": "",
       "table_index": 0
     }
   ]

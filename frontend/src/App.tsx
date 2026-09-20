@@ -18,6 +18,8 @@ import {
   ExtractionResponse,
   ExtractedFieldResult,
 } from "./api/client";
+import { FormatEditor } from "./components/FormatEditor";
+import { Plus, Settings } from "lucide-react";
 
 export default function App() {
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
@@ -29,6 +31,8 @@ export default function App() {
     null,
   );
   const [error, setError] = useState<string | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
+  const [editorTargetId, setEditorTargetId] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -116,6 +120,13 @@ export default function App() {
       setIsExporting(false);
     }
   };
+  // 会社作成・編集保存時のハンドラ
+  const handleEditorSaved = (savedId: string) => {
+    loadCompanies();
+    if (savedId) {
+      setSelectedCompanyId(savedId);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
@@ -152,12 +163,38 @@ export default function App() {
               </option>
             ))}
           </select>
+
           <button
             onClick={loadCompanies}
             title="会社フォーマット再読み込み"
             className="p-1.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-md transition"
           >
             <RefreshCw className="w-4 h-4" />
+          </button>
+          {/* 編集ボタン */}
+          <button
+            onClick={() => {
+              setEditorTargetId(selectedCompanyId);
+              setIsEditorOpen(true);
+            }}
+            disabled={!selectedCompanyId}
+            title="選択中のフォーマットを編集"
+            className="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-lg transition border border-slate-200"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+
+          {/* 新規登録ボタン */}
+          <button
+            onClick={() => {
+              setEditorTargetId(null);
+              setIsEditorOpen(true);
+            }}
+            title="新規フォーマットを追加"
+            className="px-3 py-1.5 bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 text-xs font-semibold rounded-lg transition border border-slate-200 flex items-center space-x-1"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>新規登録</span>
           </button>
         </div>
       </header>
@@ -334,6 +371,13 @@ export default function App() {
           </div>
         )}
       </main>
+      {/* 設定エディタモーダル */}
+      <FormatEditor
+        companyId={editorTargetId}
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
+        onSaved={handleEditorSaved}
+      />
     </div>
   );
 }

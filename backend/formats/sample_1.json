@@ -5,25 +5,37 @@
     {
       "field_name": "請求書番号",
       "excel_cell": "B2",
+      "excel_start_cell": null,
       "method": "regex",
-      "pattern": "INV-\\d{4}-\\d{3}"
+      "keyword": null,
+      "pattern": "INV-\\d{4}-\\d{3}",
+      "table_index": 0
     },
     {
       "field_name": "請求日",
       "excel_cell": "B3",
+      "excel_start_cell": null,
       "method": "keyword_after",
-      "keyword": "請求日:"
+      "keyword": "請求日:",
+      "pattern": null,
+      "table_index": 0
     },
     {
       "field_name": "ご請求金額",
       "excel_cell": "B4",
+      "excel_start_cell": null,
       "method": "keyword_after",
-      "keyword": "ご請求金額"
+      "keyword": "ご請求金額",
+      "pattern": null,
+      "table_index": 0
     },
     {
       "field_name": "明細一覧",
+      "excel_cell": null,
       "excel_start_cell": "A7",
       "method": "table",
+      "keyword": null,
+      "pattern": null,
       "table_index": 0
     }
   ]
