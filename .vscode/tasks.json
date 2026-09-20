@@ -35,7 +35,7 @@
       "label": "Start Frontend",
       "type": "shell",
       // ポート 5173 を解放してから sops 経由で npm run dev を起動
-      "command": "(fuser -k 5173/tcp 2>/dev/null || npx --yes kill-port 5173 || true) && sops exec-env .env.development.enc \"npm run dev\"",
+      "command": "(fuser -k 5173/tcp 2>/dev/null || npx --yes kill-port 5173 || true) && npm run dev",
       "options": {
         "cwd": "${workspaceFolder}/frontend"
       },
@@ -71,7 +71,7 @@
       "label": "Start Tauri Dev",
       "type": "shell",
       // Tauri 起動時も sops 経由で開発用環境変数を注入して起動
-      "command": "(fuser -k 5173/tcp 2>/dev/null || npx --yes kill-port 5173 || true) && sops exec-env .env.development.enc \"npx tauri dev\"",
+      "command": "(fuser -k 5173/tcp 2>/dev/null || npx --yes kill-port 5173 || true) && npx tauri dev",
       "options": {
         "cwd": "${workspaceFolder}/frontend"
       },
