@@ -1,5 +1,4 @@
 import io
-from pathlib import Path
 
 import openpyxl
 from openpyxl.utils import coordinate_to_tuple
@@ -8,19 +7,23 @@ from app.schemas import ExtractedFieldResult
 
 
 class ExcelWriter:
-    def __init__(self, template_path: str | None = None):
-        self.template_path = Path(template_path) if template_path else None
+    def __init__(self, template: str | bytes | None = None):
+        """
+        template: ファイルパス（str）またはアップロードされたExcelバイナリ（bytes）
+        """
+        self.template = template
 
     def write_data(
         self,
         extracted_data: list[ExtractedFieldResult],
         sheet_name: str | None = None,
     ) -> bytes:
-        """抽出データをExcelへ転記し、バイナリバイト列（.xlsx）として返す"""
-        if self.template_path and self.template_path.exists():
-            wb = openpyxl.load_workbook(self.template_path)
+        """既存テンプレートまたは新規ブックにデータを転記してバイト列を返す"""
+        if isinstance(self.template, bytes):
+            # アップロードされたバイナリから読み込み
+            wb = openpyxl.load_workbook(io.BytesIO(self.template))
         else:
-            # テンプレートが指定されていない場合は新規作成
+            # テンプレート指定がない場合は新規作成
             wb = openpyxl.Workbook()
 
         if sheet_name and sheet_name in wb.sheetnames:

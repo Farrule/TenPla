@@ -1,12 +1,14 @@
-from pathlib import Path
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
-from app.schemas import ExtractionResponse, ExtractedFieldResult
-from app.services.format_manager import FormatManager
-from app.services.extractor import PDFExtractor
+from pydantic import TypeAdapter
+
+from app.schemas import ExtractedFieldResult, ExtractionResponse
 from app.services.excel_writer import ExcelWriter
+from app.services.extractor import PDFExtractor
+from app.services.format_manager import FormatManager
 
 router = APIRouter(prefix="/api", tags=["extract"])
 format_manager = FormatManager()
+
 
 @router.post("/extract", response_model=ExtractionResponse)
 async def extract_pdf_data(
@@ -33,23 +35,40 @@ async def extract_pdf_data(
         extracted_data=extracted_data,
     )
 
+
 @router.post("/export-excel")
 async def export_excel(
-    extracted_data: list[ExtractedFieldResult],
-    company_id: str | None = None,
+    extracted_data: str = Form(..., description="抽出データのJSON文字列"),
+    template_file: UploadFile | None = File(
+        None, description="ベースとなるExcelテンプレート"
+    ),
+    company_id: str | None = Form(None),
 ):
-    """抽出データをExcelに書き込んでダウンロード返却"""
-    # 会社別のExcelテンプレートが存在すれば指定（無ければ標準Workbookで生成）
-    template_path = None
-    if company_id:
-        custom_tpl = Path(f"/workspace/backend/templates/{company_id}.xlsx")
-        if custom_tpl.exists():
-            template_path = str(custom_tpl)
+    """
+    アップロードされたテンプレートExcel（またはサーバー上のテンプレート）に
+    抽出データを書き込んでダウンロード返却
+    """
+    try:
+        # JSON文字列を List[ExtractedFieldResult] にパース
+        adapter = TypeAdapter(list[ExtractedFieldResult])
+        parsed_data = adapter.validate_json(extracted_data)
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Invalid extracted_data JSON: {e}")
 
-    writer = ExcelWriter(template_path=template_path)
-    excel_bytes = writer.write_data(extracted_data)
+    template_bytes = None
+    if template_file:
+        # ユーザーが画面からアップロードしたファイル
+        template_bytes = await template_file.read()
 
-    filename = f"exported_{company_id or 'result'}.xlsx"
+    writer = ExcelWriter(template=template_bytes)
+    excel_bytes = writer.write_data(parsed_data)
+
+    # 出力ファイル名の決定
+    filename = (
+        f"filled_{template_file.filename}"
+        if template_file and template_file.filename
+        else f"exported_{company_id or 'result'}.xlsx"
+    )
 
     return Response(
         content=excel_bytes,

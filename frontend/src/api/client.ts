@@ -72,11 +72,20 @@ export const extractPdf = async (
 export const exportToExcel = async (
   extractedData: ExtractedFieldResult[],
   companyId: string,
+  templateFile?: File | null,
 ): Promise<Blob> => {
-  const res = await apiClient.post("/api/export-excel", extractedData, {
-    params: { company_id: companyId },
+  const formData = new FormData();
+  formData.append("extracted_data", JSON.stringify(extractedData));
+  if (companyId) {
+    formData.append("company_id", companyId);
+  }
+  if (templateFile) {
+    formData.append("template_file", templateFile);
+  }
+
+  const res = await apiClient.post("/api/export-excel", formData, {
     responseType: "blob",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "multipart/form-data" },
   });
   return res.data;
 };

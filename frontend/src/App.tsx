@@ -23,6 +23,7 @@ export default function App() {
   const [extractResult, setExtractResult] = useState<ExtractionResponse | null>(
     null,
   );
+  const [templateFile, setTemplateFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
   const [editorTargetId, setEditorTargetId] = useState<string | null>(null);
@@ -89,17 +90,22 @@ export default function App() {
     setIsExporting(true);
 
     try {
+      // templateFile を第3引数として渡す
       const blob = await exportToExcel(
         extractResult.extracted_data,
         selectedCompanyId,
+        templateFile,
       );
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute(
-        "download",
-        `${selectedCompanyId}_${new Date().toISOString().slice(0, 10)}.xlsx`,
-      );
+
+      // テンプレート指定時はそのファイル名ベース、未指定時は会社IDベース
+      const downloadFileName = templateFile
+        ? `filled_${templateFile.name}`
+        : `${selectedCompanyId}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+      link.setAttribute("download", downloadFileName);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -153,6 +159,8 @@ export default function App() {
           <ExtractionResult
             extractResult={extractResult}
             isExporting={isExporting}
+            templateFile={templateFile}
+            onSelectTemplate={setTemplateFile}
             onDownloadExcel={handleDownloadExcel}
           />
         )}
