@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/Farrule/TenPla/compare/v1.2.0...v1.2.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* chezmoi setup ([918a179](https://github.com/Farrule/TenPla/commit/918a179230bfdcd0b0e93c894394422852e8cafb))
+
 ## [1.2.0](https://github.com/Farrule/TenPla/compare/v1.1.0...v1.2.0) (2026-09-21)
 
 
