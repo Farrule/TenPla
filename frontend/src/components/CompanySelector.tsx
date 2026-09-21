@@ -2,6 +2,7 @@
 import { Building2, Plus, RefreshCw } from "lucide-react";
 import { CompanySummary } from "../api/client";
 
+/** CompanySelectorProps のプロパティ定義 */
 interface CompanySelectorProps {
   companies: CompanySummary[];
   selectedCompanyId: string;
@@ -10,6 +11,17 @@ interface CompanySelectorProps {
   onOpenEditor: (id: string | null) => void;
 }
 
+/**
+ * CompanySelectorの概要
+ *  @param {
+ *   companies,
+ *   selectedCompanyId,
+ *   onCompanyChange,
+ *   onLoadCompanies,
+ *   onOpenEditor,
+ * } - 
+ *  @returns 
+ */
 export function CompanySelector({
   companies,
   selectedCompanyId,

@@ -14,6 +14,10 @@ import { CompanySelector } from "./components/CompanySelector";
 import { FileUploader } from "./components/FileUploader";
 import { ExtractionResult } from "./components/ExtractionResult";
 
+/**
+ * Appの概要
+ *  @returns 
+ */
 export default function App() {
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");

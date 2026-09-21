@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { ExtractionResponse } from "../api/client";
 
+/** ExtractionResultProps のプロパティ定義 */
 interface ExtractionResultProps {
   extractResult: ExtractionResponse;
   isExporting: boolean;
@@ -17,6 +18,17 @@ interface ExtractionResultProps {
   onDownloadExcel: () => void;
 }
 
+/**
+ * ExtractionResultの概要
+ *  @param {
+ *   extractResult,
+ *   isExporting,
+ *   templateFile,
+ *   onSelectTemplate,
+ *   onDownloadExcel,
+ * } - 
+ *  @returns 
+ */
 export function ExtractionResult({
   extractResult,
   isExporting,

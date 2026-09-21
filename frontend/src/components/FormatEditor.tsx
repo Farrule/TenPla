@@ -16,6 +16,7 @@ import {
   deleteCompanyFormat,
 } from "../api/client";
 
+/** FormatEditorProps のプロパティ定義 */
 interface FormatEditorProps {
   companyId: string | null;
   isOpen: boolean;
@@ -33,6 +34,7 @@ const DEFAULT_RULE: ExtractionRule = {
   table_index: 0,
 };
 
+/** FormatEditor の概要 */
 export const FormatEditor: React.FC<FormatEditorProps> = ({
   companyId,
   isOpen,

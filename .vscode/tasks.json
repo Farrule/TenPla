@@ -97,9 +97,9 @@
       "problemMatcher": []
     },
     {
-      "label": "Generate API Docs (Redoc)",
+      "label": "TypeDoc Run",
       "type": "shell",
-      "command": "PYTHONPATH=/workspace/backend /workspace/backend/.venv/bin/python -c \"import json; from app.main import app; json.dump(app.openapi(), open('/workspace/docs/openapi.json', 'w', encoding='utf-8'), indent=2, ensure_ascii=False)\" && npx --yes @redocly/cli build-docs /workspace/docs/openapi.json -o /workspace/docs/backend/api_spec.html",
+      "command": "cd frontend && npx --yes tsx scripts/add-jsdoc.ts",
       "problemMatcher": [],
       "presentation": {
         "echo": true,

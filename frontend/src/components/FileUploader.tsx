@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { UploadCloud, FileText, RefreshCw } from "lucide-react";
 
+/** FileUploaderProps のプロパティ定義 */
 interface FileUploaderProps {
   file: File | null;
   isExtracting: boolean;
@@ -10,6 +11,18 @@ interface FileUploaderProps {
   onExtract: () => void;
 }
 
+/**
+ * FileUploaderの概要
+ *  @param {
+ *   file,
+ *   isExtracting,
+ *   selectedCompanyId,
+ *   onFileDrop,
+ *   onFileSelect,
+ *   onExtract,
+ * } - 
+ *  @returns 
+ */
 export function FileUploader({
   file,
   isExtracting,

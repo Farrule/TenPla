@@ -8,6 +8,7 @@ export const apiClient = axios.create({
   baseURL: API_BASE_URL,
 });
 
+/** ExtractedFieldResult のプロパティ定義 */
 export interface ExtractedFieldResult {
   field_name: string;
   excel_cell: string | null;
@@ -16,23 +17,27 @@ export interface ExtractedFieldResult {
   value: any;
 }
 
+/** ExtractionResponse のプロパティ定義 */
 export interface ExtractionResponse {
   company_id: string;
   company_name: string;
   extracted_data: ExtractedFieldResult[];
 }
 
+/** CompanySummary のプロパティ定義 */
 export interface CompanySummary {
   company_id: string;
   company_name: string;
 }
 
 // 会社一覧の取得
+/** fetchCompanies の概要 */
 export const fetchCompanies = async (): Promise<CompanySummary[]> => {
   const res = await apiClient.get<CompanySummary[]>("/api/formats");
   return res.data;
 };
 
+/** ExtractionRule のプロパティ定義 */
 export interface ExtractionRule {
   field_name: string;
   excel_cell?: string | null;
@@ -43,6 +48,7 @@ export interface ExtractionRule {
   table_index?: number;
 }
 
+/** CompanyFormat のプロパティ定義 */
 export interface CompanyFormat {
   company_id: string;
   company_name: string;
@@ -50,6 +56,7 @@ export interface CompanyFormat {
 }
 
 // PDFアップロード＆データ抽出
+/** extractPdf の概要 */
 export const extractPdf = async (
   companyId: string,
   file: File,
@@ -69,6 +76,7 @@ export const extractPdf = async (
 };
 
 // Excelの生成＆ダウンロード
+/** exportToExcel の概要 */
 export const exportToExcel = async (
   extractedData: ExtractedFieldResult[],
   companyId: string,
@@ -91,6 +99,7 @@ export const exportToExcel = async (
 };
 
 // 会社フォーマット詳細の取得
+/** fetchCompanyFormat の概要 */
 export const fetchCompanyFormat = async (
   companyId: string,
 ): Promise<CompanyFormat> => {
@@ -99,6 +108,7 @@ export const fetchCompanyFormat = async (
 };
 
 // 会社フォーマットの新規作成・更新
+/** saveCompanyFormat の概要 */
 export const saveCompanyFormat = async (
   format: CompanyFormat,
 ): Promise<void> => {
@@ -106,6 +116,7 @@ export const saveCompanyFormat = async (
 };
 
 // 会社フォーマットの削除
+/** deleteCompanyFormat の概要 */
 export const deleteCompanyFormat = async (companyId: string): Promise<void> => {
   await apiClient.delete(`/api/formats/${companyId}`);
 };
