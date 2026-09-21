@@ -4,7 +4,7 @@
     {
       "label": "Start Backend",
       "type": "shell",
-      // ポート 8000 を解放してから sops 経由で Uvicorn を起動
+      // ポート 8000 を解放してから Uvicorn を起動
       "command": "(fuser -k 8000/tcp 2>/dev/null || npx --yes kill-port 8000 || true) && /workspace/backend/.venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
       "options": {
         "cwd": "${workspaceFolder}/backend"
@@ -34,7 +34,7 @@
     {
       "label": "Start Frontend",
       "type": "shell",
-      // ポート 5173 を解放してから sops 経由で npm run dev を起動
+      // ポート 5173 を解放してから npm run dev を起動
       "command": "(fuser -k 5173/tcp 2>/dev/null || npx --yes kill-port 5173 || true) && npm run dev",
       "options": {
         "cwd": "${workspaceFolder}/frontend"
@@ -70,7 +70,7 @@
     {
       "label": "Start Tauri Dev",
       "type": "shell",
-      // Tauri 起動時も sops 経由で開発用環境変数を注入して起動
+      // Tauri 起動時開発用環境変数を注入して起動
       "command": "(fuser -k 5173/tcp 2>/dev/null || npx --yes kill-port 5173 || true) && npx tauri dev",
       "options": {
         "cwd": "${workspaceFolder}/frontend"
@@ -95,6 +95,17 @@
       "dependsOn": ["Start Backend", "Start Tauri Dev"],
       "dependsOrder": "parallel",
       "problemMatcher": []
+    },
+    {
+      "label": "Generate API Docs (Redoc)",
+      "type": "shell",
+      "command": "PYTHONPATH=/workspace/backend /workspace/backend/.venv/bin/python -c \"import json; from app.main import app; json.dump(app.openapi(), open('/workspace/docs/openapi.json', 'w', encoding='utf-8'), indent=2, ensure_ascii=False)\" && npx --yes @redocly/cli build-docs /workspace/docs/openapi.json -o /workspace/docs/backend/api_spec.html",
+      "problemMatcher": [],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "panel": "shared"
+      }
     }
   ]
 }

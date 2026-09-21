@@ -1,0 +1,102 @@
+name: Deploy Documentation Portal
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/**"
+      - "frontend/**"
+      - "docs/**"
+      - ".github/workflows/deploy-docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # -------------------------------------------------------------
+      # 1. 環境セットアップ (Python & Node.js)
+      # -------------------------------------------------------------
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      # -------------------------------------------------------------
+      # 2. 成果物ディレクトリの初期化
+      # -------------------------------------------------------------
+      - name: Prepare Artifact Directories
+        run: |
+          mkdir -p public/backend/api
+          mkdir -p public/backend/source
+          mkdir -p public/frontend
+          # ポータル用トップページを配置
+          cp docs/index.html public/index.html
+
+      # -------------------------------------------------------------
+      # 3. Backend 仕様書ビルド (Redoc & pdoc)
+      # -------------------------------------------------------------
+      - name: Install Backend Dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install pdoc
+
+      - name: Build Backend Docs
+        run: |
+          # FastAPI から OpenAPI JSON を抽出
+          PYTHONPATH=backend python -c "import json; from app.main import app; json.dump(app.openapi(), open('public/openapi.json', 'w', encoding='utf-8'), indent=2, ensure_ascii=False)"
+
+          # Redoc HTML を生成 (API仕様)
+          npx --yes @redocly/cli build-docs public/openapi.json -o public/backend/api/index.html
+
+          # pdoc HTML を生成 (Pythonモジュール仕様)
+          PYTHONPATH=backend pdoc backend/app -o public/backend/source
+
+      # -------------------------------------------------------------
+      # 4. Frontend 仕様書ビルド (TypeDoc)
+      # -------------------------------------------------------------
+      - name: Install Frontend Dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build Frontend Docs
+        working-directory: frontend
+        run: |
+          # typedoc.json の出力先を public/frontend にオーバーライドして実行
+          npx typedoc --out ../public/frontend
+
+      # -------------------------------------------------------------
+      # 5. GitHub Pages へのデプロイ
+      # -------------------------------------------------------------
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
