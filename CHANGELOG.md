@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/Farrule/TenPla/compare/v1.1.0...v1.2.0) (2026-09-21)
+
+
+### Features
+
+* requirements setup ([a59a9db](https://github.com/Farrule/TenPla/commit/a59a9db10a6ec28507b77944d912a6965b1cd4fb))
+
+
+### Bug Fixes
+
+* delpoy-docs fix node version ([3cc925a](https://github.com/Farrule/TenPla/commit/3cc925acc9764d6901412acf340638aaedaab61b))
+* typedoc ([3d29b52](https://github.com/Farrule/TenPla/commit/3d29b52dfb47376ac00473616b211b9cc34bddee))
+
 ## [1.1.0](https://github.com/Farrule/TenPla/compare/v1.0.0...v1.1.0) (2026-09-20)
 
 
