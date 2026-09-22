@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2](https://github.com/Farrule/TenPla/compare/v1.2.1...v1.2.2) (2026-09-22)
+
+
+### Bug Fixes
+
+* formats folder ([fb31887](https://github.com/Farrule/TenPla/commit/fb318872da7380ddc09a025657efae827dc42b17))
+* icon setting ([b5e7556](https://github.com/Farrule/TenPla/commit/b5e7556240bdfc6ba98b11ade2d468c7b3d05877))
+
 ## [1.2.1](https://github.com/Farrule/TenPla/compare/v1.2.0...v1.2.1) (2026-09-21)
 
 
