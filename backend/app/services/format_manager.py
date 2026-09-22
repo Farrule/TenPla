@@ -13,7 +13,7 @@ class FormatManager:
             if getattr(sys, "frozen", False):
                 # PyInstaller環境 (Tauri Sidecar: <インストール先>/binaries/backend-server.exe)
                 # sys.executable の親の親を指すことで、インストールフォルダを基準にする
-                base_dir = Path(sys.executable).resolve().parent.parent
+                base_dir = Path(sys.executable).resolve().parent
             else:
                 # 開発環境: /workspace/backend/app/services/format_manager.py -> /workspace/backend
                 base_dir = Path(__file__).resolve().parents[2]
