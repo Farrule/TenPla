@@ -1,0 +1,103 @@
+import React from "react";
+
+interface TenPlaIconProps extends React.SVGProps<SVGSVGElement> {
+  size?: number | string;
+}
+
+export const TenPlaIcon: React.FC<TenPlaIconProps> = ({
+  size = 32,
+  className = "",
+  ...props
+}) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 512 512"
+      width={size}
+      height={size}
+      className={className}
+      {...props}
+    >
+      <defs>
+        <linearGradient
+          id="tenplaInnerGrad"
+          x1="0%"
+          y1="100%"
+          x2="100%"
+          y2="0%"
+        >
+          <stop offset="0%" stopColor="#10b981" />
+          <stop offset="35%" stopColor="#34d399" />
+          <stop offset="55%" stopColor="#f59e0b" />
+          <stop offset="85%" stopColor="#f43f5e" />
+          <stop offset="100%" stopColor="#e11d48" />
+        </linearGradient>
+        <filter id="softGlowInner" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow
+            dx="0"
+            dy="8"
+            stdDeviation="12"
+            floodColor="#000000"
+            floodOpacity="0.3"
+          />
+        </filter>
+      </defs>
+
+      <g filter="url(#softGlowInner)">
+        {/* T字水平バー */}
+        <rect
+          x="116"
+          y="128"
+          width="280"
+          height="68"
+          rx="20"
+          fill="url(#tenplaInnerGrad)"
+        />
+        {/* 垂直ステム */}
+        <rect
+          x="222"
+          y="214"
+          width="68"
+          height="96"
+          rx="18"
+          fill="url(#tenplaInnerGrad)"
+          opacity="0.95"
+        />
+        <rect
+          x="222"
+          y="328"
+          width="68"
+          height="68"
+          rx="18"
+          fill="url(#tenplaInnerGrad)"
+          opacity="0.8"
+        />
+        {/* 拡張ガイド枠 */}
+        <rect
+          x="116"
+          y="214"
+          width="88"
+          height="88"
+          rx="18"
+          fill="none"
+          stroke="#10b981"
+          strokeWidth="6"
+          strokeDasharray="8 8"
+          opacity="0.6"
+        />
+        <rect
+          x="308"
+          y="214"
+          width="88"
+          height="88"
+          rx="18"
+          fill="none"
+          stroke="#f43f5e"
+          strokeWidth="6"
+          strokeDasharray="8 8"
+          opacity="0.6"
+        />
+      </g>
+    </svg>
+  );
+};
