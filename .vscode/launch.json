@@ -8,14 +8,16 @@
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}/frontend",
       "sourceMaps": true,
-      "preLaunchTask": "Run All Dev Servers"
+      "preLaunchTask": "Run All Dev Servers",
+      "internalConsoleOptions": "neverOpen"
     },
     {
       "name": "Tauri App (Tauri + FastAPI)",
       "type": "node-terminal",
       "request": "launch",
       "command": "echo 'Starting Tauri Desktop App...'",
-      "preLaunchTask": "Run Tauri + Backend"
+      "preLaunchTask": "Run Tauri + Tauri Backend",
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }
