@@ -2,7 +2,38 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Start Backend",
+      "label": "Start Web Backend",
+      "type": "shell",
+      // ポート 8001 を解放してから Uvicorn を起動
+      "command": "(fuser -k 8001/tcp 2>/dev/null || npx --yes kill-port 8001 || true) && /workspace/backend/.venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8001",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": [
+          {
+            "regexp": ".",
+            "file": 1,
+            "location": 2,
+            "message": 3
+          }
+        ],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Started server process",
+          "endsPattern": "Application startup complete\\."
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "servers",
+        "close": true
+      }
+    },
+    {
+      "label": "Start Tauri Backend",
       "type": "shell",
       // ポート 8000 を解放してから Uvicorn を起動
       "command": "(fuser -k 8000/tcp 2>/dev/null || npx --yes kill-port 8000 || true) && /workspace/backend/.venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
@@ -28,11 +59,12 @@
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
-        "group": "servers"
+        "group": "servers",
+        "close": true
       }
     },
     {
-      "label": "Start Frontend",
+      "label": "Start Web Frontend",
       "type": "shell",
       // ポート 5173 を解放してから npm run dev を起動
       "command": "(fuser -k 5173/tcp 2>/dev/null || npx --yes kill-port 5173 || true) && npm run dev",
@@ -58,12 +90,13 @@
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
-        "group": "servers"
+        "group": "servers",
+        "close": true
       }
     },
     {
       "label": "Run All Dev Servers",
-      "dependsOn": ["Start Backend", "Start Frontend"],
+      "dependsOn": ["Start Web Backend", "Start Web Frontend"],
       "dependsOrder": "parallel",
       "problemMatcher": []
     },
@@ -87,12 +120,13 @@
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
-        "group": "tauri"
+        "group": "tauri",
+        "close": true
       }
     },
     {
-      "label": "Run Tauri + Backend",
-      "dependsOn": ["Start Backend", "Start Tauri Dev"],
+      "label": "Run Tauri + Tauri Backend",
+      "dependsOn": ["Start Tauri Backend", "Start Tauri Dev"],
       "dependsOrder": "parallel",
       "problemMatcher": []
     },

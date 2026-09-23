@@ -1,8 +1,13 @@
 // frontend/src/api/client.ts
 import axios from "axios";
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+const isTauri =
+  typeof window !== "undefined" &&
+  ("__TAURI__" in window || "__TAURI_INTERNALS__" in window);
+
+const API_BASE_URL = isTauri
+  ? import.meta.env.VITE_API_TAURI_URL || "http://127.0.0.1:8000"
+  : import.meta.env.VITE_API_WEB_URL || "http://127.0.0.1:8001";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
