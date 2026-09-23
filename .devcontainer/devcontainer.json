@@ -41,7 +41,7 @@
       ]
     }
   },
-  "forwardPorts": [5173, 8000],
+  "forwardPorts": [5173, 8000, 8001],
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "remoteUser": "vscode"
 }
