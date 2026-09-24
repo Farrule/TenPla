@@ -4,7 +4,10 @@ from typing import Any
 
 import pdfplumber
 
+from app.core.logger import get_logger
 from app.schemas import CompanyFormat, ExtractedFieldResult
+
+logger = get_logger()
 
 
 class PDFExtractor:
@@ -13,40 +16,64 @@ class PDFExtractor:
 
     def extract_from_bytes(self, pdf_bytes: bytes) -> list[ExtractedFieldResult]:
         """PDFバイト列を受け取り、設定ルールに従って抽出結果を返す"""
-        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
-            return self._process_pdf(pdf)
+        if not pdf_bytes:
+            raise ValueError("PDFデータが空です。")
+
+        try:
+            with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+                return self._process_pdf(pdf)
+        except Exception as e:
+            logger.error(f"Failed to parse PDF bytes: {e}", exc_info=True)
+            raise
 
     def extract_from_path(self, file_path: str) -> list[ExtractedFieldResult]:
         """ファイルパスからPDFを読み込んで抽出結果を返す"""
-        with pdfplumber.open(file_path) as pdf:
-            return self._process_pdf(pdf)
+        try:
+            with pdfplumber.open(file_path) as pdf:
+                return self._process_pdf(pdf)
+        except Exception as e:
+            logger.error(f"Failed to parse PDF file at {file_path}: {e}", exc_info=True)
+            raise
 
     def _process_pdf(self, pdf: pdfplumber.PDF) -> list[ExtractedFieldResult]:
+        if not pdf.pages:
+            logger.warning("PDF has no pages")
+            return []
+
         # 全ページの生テキストを結合
         full_text = ""
-        for page in pdf.pages:
-            text = page.extract_text()
-            if text:
-                full_text += text + "\n"
+        for i, page in enumerate(pdf.pages):
+            try:
+                text = page.extract_text()
+                if text:
+                    full_text += text + "\n"
+            except Exception as e:
+                logger.warning(f"Error extracting text from page {i}: {e}")
 
         # 全ページの表（Table）を収集
         all_tables = []
-        for page in pdf.pages:
-            tables = page.extract_tables()
-            if tables:
-                all_tables.extend(tables)
+        for i, page in enumerate(pdf.pages):
+            try:
+                tables = page.extract_tables()
+                if tables:
+                    all_tables.extend(tables)
+            except Exception as e:
+                logger.warning(f"Error extracting tables from page {i}: {e}")
 
         results: list[ExtractedFieldResult] = []
 
         for rule in self.format.rules:
             extracted_val = None
 
-            if rule.method == "keyword_after":
-                extracted_val = self._extract_keyword_after(full_text, rule.keyword)
-            elif rule.method == "regex":
-                extracted_val = self._extract_regex(full_text, rule.pattern)
-            elif rule.method == "table":
-                extracted_val = self._extract_table(all_tables, rule.table_index or 0)
+            try:
+                if rule.method == "keyword_after":
+                    extracted_val = self._extract_keyword_after(full_text, rule.keyword)
+                elif rule.method == "regex":
+                    extracted_val = self._extract_regex(full_text, rule.pattern)
+                elif rule.method == "table":
+                    extracted_val = self._extract_table(all_tables, rule.table_index or 0)
+            except Exception as e:
+                logger.error(f"Error applying rule '{rule.field_name}' ({rule.method}): {e}", exc_info=True)
 
             results.append(
                 ExtractedFieldResult(
@@ -64,11 +91,14 @@ class PDFExtractor:
         """指定したキーワードの直後にある文字列・数値を抽出"""
         if not keyword:
             return None
-        # キーワードの後に続くコロンやスペースを許容し、次の単語または行末までを取得
-        pattern = rf"{re.escape(keyword)}[：:\s]*([^\n\r]+)"
-        match = re.search(pattern, text)
-        if match:
-            return match.group(1).strip()
+        try:
+            # キーワードの後に続くコロンやスペースを許容し、次の単語または行末までを取得
+            pattern = rf"{re.escape(keyword)}[：:\s]*([^\n\r]+)"
+            match = re.search(pattern, text)
+            if match:
+                return match.group(1).strip()
+        except re.error as e:
+            logger.warning(f"Regex error for keyword '{keyword}': {e}")
         return None
 
     def _extract_regex(self, text: str, pattern: str | None) -> str | None:
@@ -83,7 +113,7 @@ class PDFExtractor:
                     return match.group(1).strip()
                 return match.group(0).strip()
         except re.error as e:
-            print(f"Invalid regex pattern '{pattern}': {e}")
+            logger.warning(f"Invalid regex pattern '{pattern}': {e}")
         return None
 
     def _extract_table(
@@ -104,3 +134,4 @@ class PDFExtractor:
                     cleaned_table.append(cleaned_row)
             return cleaned_table
         return None
+
