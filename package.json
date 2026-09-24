@@ -1,6 +1,6 @@
 {
   "name": "workspace",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "cd backend source .venv/bin/activate uvicorn app.main:app --reload --port 8000",
   "main": "index.js",
   "directories": {
