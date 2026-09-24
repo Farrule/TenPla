@@ -13,6 +13,7 @@
     "windows": [
       {
         "title": "TenPla",
+        "devtools": true,
         "width": 1500,
         "height": 900,
         "resizable": true,
