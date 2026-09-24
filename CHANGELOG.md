@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.4](https://github.com/Farrule/TenPla/compare/v1.2.3...v1.2.4) (2026-09-24)
+
+
+### Bug Fixes
+
+* windwos build tasks ([9c2cac6](https://github.com/Farrule/TenPla/commit/9c2cac6e839ac5874d783946ee0b7d3046655b7a))
+
 ## [1.2.3](https://github.com/Farrule/TenPla/compare/v1.2.2...v1.2.3) (2026-09-24)
 
 
