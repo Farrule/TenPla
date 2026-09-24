@@ -2,11 +2,17 @@ name: Build Windows Application
 
 on:
   release:
-    types: [published] # Release Pleaseによってリリースが公開された時にトリガー
+    types: [published] # Release Please 等でリリースが公開された時
   workflow_dispatch: # 手動実行トリガー
+    inputs:
+      target_tag:
+        description: "アップロード先の Release タグ名 (未指定の場合は 'latest')"
+        required: false
+        default: "latest"
+        type: string
 
 permissions:
-  contents: write # Releaseにアセットをアップロードするために必要
+  contents: write # Releaseの作成・アセット更新に必須
 
 jobs:
   build-windows:
@@ -87,7 +93,7 @@ jobs:
           npx tauri build
 
       # ----------------------------------------------------
-      # 6. 生成されたインストーラーを Artifacts にアップロード（無圧縮で高速化）
+      # 6. 生成されたインストーラーを Artifacts にアップロード（無圧縮）
       # ----------------------------------------------------
       - name: Upload Windows Bundle Artifacts
         uses: actions/upload-artifact@v4
@@ -96,18 +102,40 @@ jobs:
           path: |
             frontend/src-tauri/target/release/bundle/msi/*.msi
             frontend/src-tauri/target/release/bundle/nsis/*.exe
-          compression-level: 0 # 二重圧縮を回避して処理とダウンロードを高速化
+          compression-level: 0
           if-no-files-found: error
 
       # ----------------------------------------------------
-      # 7. GitHub Releases にアップロード (CDN経由で超高速ダウンロード)
+      # 7. アップロード先タグ名の解決ステップ
+      # ----------------------------------------------------
+      - name: Resolve Target Tag
+        id: resolve-tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "tag_name=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          else
+            TARGET_TAG="${{ inputs.target_tag }}"
+            if [ -z "$TARGET_TAG" ]; then
+              TARGET_TAG="latest"
+            fi
+            echo "tag_name=$TARGET_TAG" >> $GITHUB_OUTPUT
+          fi
+
+      # ----------------------------------------------------
+      # 8. GitHub Releases への高速アップロード
       # ----------------------------------------------------
       - name: Upload binaries to Release
         uses: softprops/action-gh-release@v2
-        if: github.event_name == 'release'
         with:
+          tag_name: ${{ steps.resolve-tag.outputs.tag_name }}
           files: |
             frontend/src-tauri/target/release/bundle/msi/*.msi
             frontend/src-tauri/target/release/bundle/nsis/*.exe
+          prerelease: false
+          # すでに同名のアセットが存在する場合は上書き
+          overwrite: true
+          # 該当タグの Release がまだ存在しない場合は自動作成
+          make_latest: ${{ steps.resolve-tag.outputs.tag_name == 'latest' && 'true' || 'false' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
