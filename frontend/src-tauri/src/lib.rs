@@ -47,7 +47,7 @@ pub fn run() {
                     .build(),
             )?;
 
-            let sidecar = app.shell().sidecar("backend-server").unwrap();
+            let sidecar = app.shell().sidecar("backend-server").unwrap().args(["--port", "8000"]);
             let (_rx, child) = sidecar.spawn().unwrap();
 
             let state = app.state::<BackendChild>();
