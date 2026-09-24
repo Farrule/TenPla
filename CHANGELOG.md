@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/Farrule/TenPla/compare/v1.3.1...v1.4.0) (2026-09-24)
+
+
+### Features
+
+* 名前を付けて保存、共通通知モーダル、バージョン表示を追加 ([074e161](https://github.com/Farrule/TenPla/commit/074e161e35790876ffc29f28901bf6c933d2cadd))
+
 ## [1.3.1](https://github.com/Farrule/TenPla/compare/v1.3.0...v1.3.1) (2026-09-24)
 
 
