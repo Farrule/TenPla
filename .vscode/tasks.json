@@ -140,6 +140,38 @@
         "reveal": "always",
         "panel": "shared"
       }
+    },
+    {
+      "label": "Build All (Windows)",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Build Backend (Sidecar)", "Build Tauri App"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Backend (Sidecar)",
+      "type": "shell",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Set-Location backend; .\\.venv\\Scripts\\Activate.ps1; pyinstaller --noconfirm --onefile --windowed --name backend-server --add-data 'app;app' run_server.py; New-Item -ItemType Directory -Force -Path ..\\src-tauri\\binaries; Copy-Item .\\dist\\backend-server.exe ..\\src-tauri\\binaries\\backend-server-x86_64-pc-windows-msvc.exe\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Build Tauri App",
+      "type": "shell",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Set-Location frontend; npx tauri build\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "close": false
+      },
+      "problemMatcher": []
     }
   ]
 }

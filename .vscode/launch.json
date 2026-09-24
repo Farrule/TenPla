@@ -18,6 +18,22 @@
       "command": "echo 'Starting Tauri Desktop App...'",
       "preLaunchTask": "Run Tauri + Tauri Backend",
       "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Run Task: Build All (Windows)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "echo 'Build All (Windows) Finished.'",
+      "preLaunchTask": "Build All (Windows)"
+    },
+
+    // （参考）ビルド後に生成された Tauri アプリ (.exe) をそのまま起動してデバッグ確認したい場合
+    {
+      "name": "Build & Launch Tauri App (.exe)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "powershell -NoProfile -Command \"& '${workspaceFolder}/frontend/src-tauri/target/release/TenPla.exe'\"",
+      "preLaunchTask": "Build All (Windows)"
     }
   ]
 }

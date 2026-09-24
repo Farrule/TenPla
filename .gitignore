@@ -11,3 +11,9 @@ README.md
 TODO.md
 tsconfig.node.tsbuildinfo
 tsconfig.tsbuildinfo
+vite.config.js
+vite.config.d.ts
+backend/build/
+backend/backend-server.spec
+src-tauri/binaries/
+frontend/src-tauri/binaries/
