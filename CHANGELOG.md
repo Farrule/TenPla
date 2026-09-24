@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.3](https://github.com/Farrule/TenPla/compare/v1.2.2...v1.2.3) (2026-09-24)
+
+
+### Bug Fixes
+
+* build win ([d40a82b](https://github.com/Farrule/TenPla/commit/d40a82b8e981026e3389ddc46dc25093b9dc8b54))
+* screen size ([297fc99](https://github.com/Farrule/TenPla/commit/297fc99708d831c3318f96daba11681f6242d328))
+
 ## [1.2.2](https://github.com/Farrule/TenPla/compare/v1.2.1...v1.2.2) (2026-09-22)
 
 
