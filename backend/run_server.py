@@ -5,6 +5,12 @@ import sys
 
 import uvicorn
 
+# PyInstaller の --windowed 実行時に stdout/stderr が None になりクラッシュするのを防止
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")
+
 # PyInstallerで固めた際のカレントパス調整
 if getattr(sys, "frozen", False):
     os.chdir(sys._MEIPASS)
@@ -23,4 +29,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print(f"[TenPla] Starting backend server on 127.0.0.1:{args.port}")
-    uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="info")
+    uvicorn.run(app, host="127.0.0.1", port=args.port, log_level="info", log_config=None)
