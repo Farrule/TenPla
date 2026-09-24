@@ -15,9 +15,11 @@ export function Header() {
           />
         </div>
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
-            TenPla
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">
+              TenPla
+            </h1>
+          </div>
           <p className="text-xs text-slate-500 font-medium">
             PDF to Excel 自動転記システム
           </p>

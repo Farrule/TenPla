@@ -68,6 +68,7 @@ export interface ExtractionResponse {
   company_id: string;
   company_name: string;
   extracted_data: ExtractedFieldResult[];
+  pdf_filename?: string;
 }
 
 /** CompanySummary のプロパティ定義 */
@@ -127,6 +128,8 @@ export const exportToExcel = async (
   extractedData: ExtractedFieldResult[],
   companyId: string,
   templateFile?: File | null,
+  pdfFilename?: string | null,
+  outputFilename?: string | null,
 ): Promise<Blob> => {
   const formData = new FormData();
   formData.append("extracted_data", JSON.stringify(extractedData));
@@ -135,6 +138,12 @@ export const exportToExcel = async (
   }
   if (templateFile) {
     formData.append("template_file", templateFile);
+  }
+  if (pdfFilename) {
+    formData.append("pdf_filename", pdfFilename);
+  }
+  if (outputFilename) {
+    formData.append("output_filename", outputFilename);
   }
 
   const res = await apiClient.post("/api/export-excel", formData, {

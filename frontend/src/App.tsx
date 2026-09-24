@@ -14,13 +14,16 @@ import { Header } from "./components/Header";
 import { CompanySelector } from "./components/CompanySelector";
 import { FileUploader } from "./components/FileUploader";
 import { ExtractionResult } from "./components/ExtractionResult";
+import { useNotification } from "./context/NotificationContext";
 import { logger } from "./utils/logger";
+import { Footer } from "./components/Footer";
 
 /**
  * Appの概要
  *  @returns
  */
 export default function App() {
+  const { notifySuccess, notifyError } = useNotification();
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
@@ -41,9 +44,10 @@ export default function App() {
         // 起動完了後にフォーマット取得を実行
         loadCompanies();
       } else {
-        setError(
-          "バックエンドサーバーの起動確認がタイムアウトしました。サーバーが正常に起動しているかご確認ください。",
-        );
+        const msg =
+          "バックエンドサーバーの起動確認がタイムアウトしました。サーバーが正常に起動しているかご確認ください。";
+        setError(msg);
+        notifyError(msg, "接続エラー");
       }
     };
     init();
@@ -57,9 +61,10 @@ export default function App() {
         setSelectedCompanyId(data[0].company_id);
       }
     } catch (err: any) {
-      setError(
-        "会社フォーマット一覧の取得に失敗しました。バックエンドが起動しているか確認してください。",
-      );
+      const msg =
+        "会社フォーマット一覧の取得に失敗しました。バックエンドが起動しているか確認してください。";
+      setError(msg);
+      notifyError(msg, "通信エラー");
     }
   };
 
@@ -71,12 +76,18 @@ export default function App() {
         setFile(dropped);
         setExtractResult(null);
         setError(null);
+        notifySuccess(
+          `PDF「${dropped.name}」を読み込みました。`,
+          "ファイル読み込み",
+        );
       } else {
         logger.warn(
           "frontend",
           `サポート対象外のファイル形式がドロップされました: ${dropped.name}`,
         );
-        setError("PDFファイルのみ対応しています。");
+        const msg = "PDFファイルのみ対応しています。";
+        setError(msg);
+        notifyError(msg, "ファイル形式エラー");
       }
     }
   };
@@ -84,27 +95,40 @@ export default function App() {
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selected = e.target.files[0];
-      if (selected.type === "application/pdf" || selected.name.toLowerCase().endsWith(".pdf")) {
+      if (
+        selected.type === "application/pdf" ||
+        selected.name.toLowerCase().endsWith(".pdf")
+      ) {
         setFile(selected);
         setExtractResult(null);
         setError(null);
+        notifySuccess(
+          `PDF「${selected.name}」を選択しました。`,
+          "ファイル選択",
+        );
       } else {
         logger.warn(
           "frontend",
           `サポート対象外のファイル形式が選択されました: ${selected.name}`,
         );
-        setError("PDFファイルのみ対応しています。");
+        const msg = "PDFファイルのみ対応しています。";
+        setError(msg);
+        notifyError(msg, "ファイル形式エラー");
       }
     }
   };
 
   const handleExtract = async () => {
     if (!file) {
-      setError("解析するPDFファイルを選択してください。");
+      const msg = "解析するPDFファイルを選択してください。";
+      setError(msg);
+      notifyError(msg, "入力エラー");
       return;
     }
     if (!selectedCompanyId) {
-      setError("会社フォーマットを選択してください。");
+      const msg = "会社フォーマットを選択してください。";
+      setError(msg);
+      notifyError(msg, "入力エラー");
       return;
     }
 
@@ -114,44 +138,71 @@ export default function App() {
     try {
       const result = await extractPdf(selectedCompanyId, file);
       setExtractResult(result);
+      notifySuccess(
+        `PDF「${file.name}」からデータを正常に抽出しました。`,
+        "抽出成功",
+      );
     } catch (err: any) {
       const msg =
         err.response?.data?.detail || "PDF解析中にエラーが発生しました。";
       setError(msg);
+      notifyError(msg, "抽出エラー");
     } finally {
       setIsExtracting(false);
     }
   };
 
-  const handleDownloadExcel = async () => {
+  const handleDownloadExcel = async (customFilename?: string) => {
     if (!extractResult) return;
     setIsExporting(true);
 
     try {
-      // templateFile を第3引数として渡す
+      const pdfName = extractResult.pdf_filename || file?.name || null;
+      let downloadFileName = customFilename?.trim();
+
+      if (!downloadFileName) {
+        if (pdfName) {
+          const stem = pdfName.replace(/\.[^/.]+$/, "");
+          downloadFileName = `${stem}.xlsx`;
+        } else if (templateFile) {
+          downloadFileName = `filled_${templateFile.name}`;
+        } else {
+          downloadFileName = `${selectedCompanyId}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        }
+      }
+
+      if (
+        !downloadFileName.toLowerCase().endsWith(".xlsx") &&
+        !downloadFileName.toLowerCase().endsWith(".xlsm")
+      ) {
+        downloadFileName += ".xlsx";
+      }
+
       const blob = await exportToExcel(
         extractResult.extracted_data,
         selectedCompanyId,
         templateFile,
+        pdfName,
+        downloadFileName,
       );
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-
-      // テンプレート指定時はそのファイル名ベース、未指定時は会社IDベース
-      const downloadFileName = templateFile
-        ? `filled_${templateFile.name}`
-        : `${selectedCompanyId}_${new Date().toISOString().slice(0, 10)}.xlsx`;
-
       link.setAttribute("download", downloadFileName);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
+
+      notifySuccess(
+        `Excelファイル「${downloadFileName}」を保存しました。`,
+        "保存完了",
+      );
     } catch (err: any) {
       const msg =
         err.response?.data?.detail || "Excel出力中にエラーが発生しました。";
       setError(msg);
+      notifyError(msg, "出力エラー");
     } finally {
       setIsExporting(false);
     }
@@ -164,7 +215,9 @@ export default function App() {
 
   const handleEditorSaved = (savedCompanyId: string) => {
     loadCompanies();
-    setSelectedCompanyId(savedCompanyId);
+    if (savedCompanyId) {
+      setSelectedCompanyId(savedCompanyId);
+    }
   };
 
   return (
@@ -200,6 +253,7 @@ export default function App() {
             extractResult={extractResult}
             isExporting={isExporting}
             templateFile={templateFile}
+            pdfFileName={file?.name}
             onSelectTemplate={setTemplateFile}
             onDownloadExcel={handleDownloadExcel}
           />
@@ -212,6 +266,7 @@ export default function App() {
         onClose={() => setIsEditorOpen(false)}
         onSaved={handleEditorSaved}
       />
+      <Footer />
     </div>
   );
 }

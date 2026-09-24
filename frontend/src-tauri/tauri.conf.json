@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "TenPla",
-  "version": "0.1.0",
+  "version": "1.2.5",
   "identifier": "com.tenpla.app",
   "build": {
     "frontendDist": "../dist",
@@ -17,7 +17,8 @@
         "width": 1500,
         "height": 900,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "dragDropEnabled": true
       }
     ],
     "security": {

@@ -15,6 +15,7 @@ import {
   saveCompanyFormat,
   deleteCompanyFormat,
 } from "../api/client";
+import { useNotification } from "../context/NotificationContext";
 import { logger } from "../utils/logger";
 
 /** FormatEditorProps のプロパティ定義 */
@@ -42,6 +43,7 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
   onClose,
   onSaved,
 }) => {
+  const { notifySuccess, notifyError } = useNotification();
   const [formData, setFormData] = useState<CompanyFormat>({
     company_id: "",
     company_name: "",
@@ -78,7 +80,9 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
       const data = await fetchCompanyFormat(id);
       setFormData(data);
     } catch (err: any) {
-      setError("設定の読み込みに失敗しました。");
+      const msg = "設定の読み込みに失敗しました。";
+      setError(msg);
+      notifyError(msg, "読み込みエラー");
     }
   };
 
@@ -116,13 +120,20 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${formData.company_id || "new"}_format.json`;
+      const fileName = `${formData.company_id || "new"}_format.json`;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
+      notifySuccess(
+        `設定ファイル「${fileName}」を出力しました。`,
+        "エクスポート完了",
+      );
     } catch (err) {
-      setError("エクスポートに失敗しました。");
+      const msg = "エクスポートに失敗しました。";
+      setError(msg);
+      notifyError(msg, "エクスポートエラー");
     }
   };
 
@@ -137,15 +148,26 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
         const parsed = JSON.parse(content);
         // 簡単なバリデーション
         if (typeof parsed !== "object" || !Array.isArray(parsed.rules)) {
-          throw new Error("フォーマット形式が正しくありません (rules配列が見つかりません)");
+          throw new Error(
+            "フォーマット形式が正しくありません (rules配列が見つかりません)",
+          );
         }
         setFormData(parsed);
         // inputをリセット
         e.target.value = "";
         setError(null);
+        notifySuccess(
+          `設定ファイル「${file.name}」をインポートしました。`,
+          "インポート完了",
+        );
       } catch (err: any) {
-        logger.warn("frontend", `フォーマットJSONのインポートに失敗しました: ${err.message}`);
-        setError("ファイルの読み込みに失敗しました: " + err.message);
+        logger.warn(
+          "frontend",
+          `フォーマットJSONのインポートに失敗しました: ${err.message}`,
+        );
+        const msg = "ファイルの読み込みに失敗しました: " + err.message;
+        setError(msg);
+        notifyError(msg, "インポートエラー");
       }
     };
     reader.readAsText(file);
@@ -155,16 +177,23 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
     e.preventDefault();
     const safeCompanyId = formData.company_id.trim();
     if (!safeCompanyId) {
-      setError("会社ID（英数字）を入力してください。");
+      const msg = "会社ID（英数字）を入力してください。";
+      setError(msg);
+      notifyError(msg, "入力エラー");
       return;
     }
     // 会社IDに使用可能な文字チェック
     if (!/^[a-zA-Z0-9_-]+$/.test(safeCompanyId)) {
-      setError("会社IDには半角英数字、ハイフン(-)、アンダースコア(_)のみ使用できます。");
+      const msg =
+        "会社IDには半角英数字、ハイフン(-)、アンダースコア(_)のみ使用できます。";
+      setError(msg);
+      notifyError(msg, "入力エラー");
       return;
     }
     if (!formData.company_name.trim()) {
-      setError("会社名を入力してください。");
+      const msg = "会社名を入力してください。";
+      setError(msg);
+      notifyError(msg, "入力エラー");
       return;
     }
 
@@ -172,11 +201,17 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
     setError(null);
     try {
       await saveCompanyFormat({ ...formData, company_id: safeCompanyId });
+      notifySuccess(
+        `会社フォーマット「${formData.company_name}」を保存しました。`,
+        "保存完了",
+      );
       onSaved(safeCompanyId);
       onClose();
     } catch (err: any) {
-      const msg = err.response?.data?.detail || "保存中にエラーが発生しました。";
+      const msg =
+        err.response?.data?.detail || "保存中にエラーが発生しました。";
       setError(msg);
+      notifyError(msg, "保存エラー");
     } finally {
       setIsSaving(false);
     }
@@ -193,11 +228,16 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
 
     try {
       await deleteCompanyFormat(companyId);
+      notifySuccess(
+        `会社フォーマット「${formData.company_name}」を削除しました。`,
+        "削除完了",
+      );
       onSaved("");
       onClose();
     } catch (err: any) {
       const msg = err.response?.data?.detail || "削除に失敗しました。";
       setError(msg);
+      notifyError(msg, "削除エラー");
     }
   };
 
@@ -215,15 +255,25 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
             </h2>
           </div>
           <div className="flex items-center space-x-2">
-            <button
-              onClick={() =>
-                document.getElementById("import-format-input")?.click()
-              }
-              title="フォーマットをインポート"
-              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition"
-            >
-              <Download className="w-4 h-4" />
-            </button>
+            {companyId ? (
+              <button
+                onClick={handleExport}
+                title="フォーマットをエクスポート"
+                className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition"
+              >
+                <Upload className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={() =>
+                  document.getElementById("import-format-input")?.click()
+                }
+                title="フォーマットをインポート"
+                className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            )}
             <input
               type="file"
               id="import-format-input"
@@ -231,13 +281,6 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
               className="hidden"
               onChange={handleImport}
             />
-            <button
-              onClick={handleExport}
-              title="フォーマットをエクスポート"
-              className="p-1.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded transition"
-            >
-              <Upload className="w-4 h-4" />
-            </button>
             <button
               onClick={onClose}
               className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200 transition ml-2"

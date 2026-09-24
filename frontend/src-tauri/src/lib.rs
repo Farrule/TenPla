@@ -103,12 +103,17 @@ fn kill_process_tree(child: CommandChild) {
     }
 }
 
+#[tauri::command]
+fn get_app_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .manage(BackendChild(Mutex::new(None)))
-        .invoke_handler(tauri::generate_handler![log_message])
+        .invoke_handler(tauri::generate_handler![log_message, get_app_version])
         .setup(|app| {
             #[cfg(debug_assertions)]
             app.handle().plugin(
@@ -119,25 +124,26 @@ pub fn run() {
 
             log_to_file("tauri", "INFO", "Initializing application and backend sidecar...");
 
-            let sidecar_cmd = match app.shell().sidecar("backend-server") {
-                Ok(cmd) => cmd.args(["--port", "8000", "--app-mode", "tauri"]),
+            match app.shell().sidecar("backend-server") {
+                Ok(sidecar_cmd) => {
+                    let sidecar_cmd = sidecar_cmd.args(["--port", "8000", "--app-mode", "tauri"]);
+                    match sidecar_cmd.spawn() {
+                        Ok((_rx, child)) => {
+                            log_to_file("tauri", "INFO", "Backend sidecar process spawned successfully");
+                            let state = app.state::<BackendChild>();
+                            *state.0.lock().unwrap() = Some(child);
+                        }
+                        Err(e) => {
+                            let err_msg = format!("Failed to spawn backend-server sidecar process: {e}");
+                            log_to_file("tauri", "ERROR", &err_msg);
+                            eprintln!("[tauri] {err_msg}");
+                        }
+                    }
+                }
                 Err(e) => {
                     let err_msg = format!("Failed to configure backend-server sidecar: {e}");
                     log_to_file("tauri", "ERROR", &err_msg);
-                    return Err(e.into());
-                }
-            };
-
-            match sidecar_cmd.spawn() {
-                Ok((_rx, child)) => {
-                    log_to_file("tauri", "INFO", "Backend sidecar process spawned successfully");
-                    let state = app.state::<BackendChild>();
-                    *state.0.lock().unwrap() = Some(child);
-                }
-                Err(e) => {
-                    let err_msg = format!("Failed to spawn backend-server sidecar process: {e}");
-                    log_to_file("tauri", "ERROR", &err_msg);
-                    return Err(e.into());
+                    eprintln!("[tauri] {err_msg}");
                 }
             }
 

@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import {
   CheckCircle2,
   Download,
@@ -6,6 +6,7 @@ import {
   FileSpreadsheet,
   FileCheck,
   X,
+  Save,
 } from "lucide-react";
 import { ExtractionResponse } from "../api/client";
 
@@ -14,29 +15,55 @@ interface ExtractionResultProps {
   extractResult: ExtractionResponse;
   isExporting: boolean;
   templateFile: File | null;
+  pdfFileName?: string | null;
   onSelectTemplate: (file: File | null) => void;
-  onDownloadExcel: () => void;
+  onDownloadExcel: (customFilename?: string) => void;
 }
 
 /**
  * ExtractionResultの概要
- *  @param {
- *   extractResult,
- *   isExporting,
- *   templateFile,
- *   onSelectTemplate,
- *   onDownloadExcel,
- * } - 
- *  @returns 
  */
 export function ExtractionResult({
   extractResult,
   isExporting,
   templateFile,
+  pdfFileName,
   onSelectTemplate,
   onDownloadExcel,
 }: ExtractionResultProps) {
   const excelInputRef = useRef<HTMLInputElement>(null);
+  const [isSaveAsOpen, setIsSaveAsOpen] = useState(false);
+
+  // 抽出元PDFのファイル名をもとにしたデフォルトのExcelファイル名を生成
+  const defaultExcelFileName = useMemo(() => {
+    const sourceName = extractResult.pdf_filename || pdfFileName;
+    if (sourceName) {
+      // 拡張子を除去して .xlsx を付与
+      const baseName = sourceName.replace(/\.[^/.]+$/, "");
+      return `${baseName}.xlsx`;
+    }
+    return `${extractResult.company_id || "result"}.xlsx`;
+  }, [extractResult, pdfFileName]);
+
+  const [customFileName, setCustomFileName] = useState("");
+
+  const handleOpenSaveAs = () => {
+    setCustomFileName(defaultExcelFileName);
+    setIsSaveAsOpen(true);
+  };
+
+  const handleSaveAsSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    let nameToSave = customFileName.trim();
+    if (!nameToSave) {
+      nameToSave = defaultExcelFileName;
+    }
+    if (!nameToSave.toLowerCase().endsWith(".xlsx") && !nameToSave.toLowerCase().endsWith(".xlsm")) {
+      nameToSave += ".xlsx";
+    }
+    setIsSaveAsOpen(false);
+    onDownloadExcel(nameToSave);
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -102,9 +129,10 @@ export function ExtractionResult({
             </button>
           )}
 
-          {/* ダウンロード実行ボタン */}
+          {/* Excelダウンロード（名前を付けて保存）ボタン */}
           <button
-            onClick={onDownloadExcel}
+            type="button"
+            onClick={handleOpenSaveAs}
             disabled={isExporting}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-medium transition-colors
               ${
@@ -113,6 +141,7 @@ export function ExtractionResult({
                   : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm"
               }
             `}
+            title={`ファイル名: ${defaultExcelFileName}`}
           >
             {isExporting ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -129,6 +158,67 @@ export function ExtractionResult({
           </button>
         </div>
       </div>
+
+      {/* 名前を付けて保存 モーダル */}
+      {isSaveAsOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center space-x-2">
+                <Save className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-base font-bold text-slate-800">
+                  名前を付けて保存
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsSaveAsOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-200 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAsSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  Excelファイル名
+                </label>
+                <input
+                  type="text"
+                  required
+                  autoFocus
+                  value={customFileName}
+                  onChange={(e) => setCustomFileName(e.target.value)}
+                  placeholder={defaultExcelFileName}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none font-medium"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  ※ 拡張子「.xlsx」は自動補完されます。
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsSaveAsOpen(false)}
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                >
+                  キャンセル
+                </button>
+                <button
+                  type="submit"
+                  disabled={isExporting || !customFileName.trim()}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white text-xs font-medium rounded-lg shadow-sm transition"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>保存する</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* 単一項目カードグリッド */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

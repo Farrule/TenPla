@@ -40,3 +40,4 @@ class ExtractionResponse(BaseModel):
     company_id: str
     company_name: str
     extracted_data: list[ExtractedFieldResult]
+    pdf_filename: str | None = None

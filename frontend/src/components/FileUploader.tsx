@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { UploadCloud, FileText, RefreshCw } from "lucide-react";
 
 /** FileUploaderProps のプロパティ定義 */
@@ -13,15 +13,6 @@ interface FileUploaderProps {
 
 /**
  * FileUploaderの概要
- *  @param {
- *   file,
- *   isExtracting,
- *   selectedCompanyId,
- *   onFileDrop,
- *   onFileSelect,
- *   onExtract,
- * } - 
- *  @returns 
  */
 export function FileUploader({
   file,
@@ -32,9 +23,37 @@ export function FileUploader({
   onExtract,
 }: FileUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "copy";
+    if (!isDragging) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // 関連ターゲットがドロップ領域内部でない場合のみ解除
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    onFileDrop(e);
   };
 
   return (
@@ -46,14 +65,18 @@ export function FileUploader({
         </h2>
 
         <div
+          onDragEnter={handleDragEnter}
           onDragOver={handleDragOver}
-          onDrop={onFileDrop}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
           onClick={() => fileInputRef.current?.click()}
-          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors
+          className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all duration-200
             ${
-              file
-                ? "border-indigo-300 bg-indigo-50/50"
-                : "border-slate-300 hover:border-indigo-400 hover:bg-slate-50"
+              isDragging
+                ? "border-indigo-500 bg-indigo-100/70 scale-[1.01] shadow-md"
+                : file
+                  ? "border-indigo-300 bg-indigo-50/50"
+                  : "border-slate-300 hover:border-indigo-400 hover:bg-slate-50"
             }
           `}
         >
@@ -76,10 +99,14 @@ export function FileUploader({
             </div>
           ) : (
             <div className="space-y-3">
-              <UploadCloud className="w-10 h-10 text-slate-400 mx-auto" />
+              <UploadCloud
+                className={`w-10 h-10 mx-auto transition-colors ${
+                  isDragging ? "text-indigo-600 animate-bounce" : "text-slate-400"
+                }`}
+              />
               <div>
                 <p className="text-sm font-medium text-slate-700">
-                  クリックしてファイルを選択
+                  {isDragging ? "ここにPDFファイルをドロップ" : "クリックしてファイルを選択"}
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
                   またはここにPDFをドラッグ＆ドロップ
@@ -112,3 +139,4 @@ export function FileUploader({
     </div>
   );
 }
+

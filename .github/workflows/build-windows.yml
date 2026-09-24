@@ -84,6 +84,38 @@ jobs:
           npm ci
 
       # ----------------------------------------------------
+      #  Git タグ / Release からバージョンを解決してファイルへ同期
+      # ----------------------------------------------------
+      - name: Sync Version to tauri.conf.json and Cargo.toml
+        id: sync-version
+        shell: bash
+        run: |
+          # 1. タグ名の取得（手動入力または release イベント）
+          if [ "${{ github.event_name }}" = "release" ]; then
+            RAW_TAG="${{ github.event.release.tag_name }}"
+          else
+            RAW_TAG="${{ inputs.target_tag }}"
+          fi
+
+          # 2. 先頭の "v" を除去（例: v0.2.1 -> 0.2.1）
+          CLEAN_VERSION=$(echo "$RAW_TAG" | sed -E 's/^v//')
+
+          # 3. セマンティックバージョニング形式（X.Y.Z）に一致するか検証
+          if [[ "$CLEAN_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "Applying version: $CLEAN_VERSION"
+
+            # tauri.conf.json の "version": "..." を置換
+            sed -i -E "s/\"version\": \"[^\"]*\"/\"version\": \"$CLEAN_VERSION\"/" frontend/src-tauri/tauri.conf.json
+
+            # Cargo.toml の最初の package.version を置換
+            sed -i -E "0,/^version = \".*\"/s//version = \"$CLEAN_VERSION\"/" frontend/src-tauri/Cargo.toml
+
+            echo "synced_version=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "Using current configuration version (non-semver tag: $RAW_TAG)"
+          fi
+
+      # ----------------------------------------------------
       # 5. Tauri アプリケーションのビルド (.exe / .msi)
       # ----------------------------------------------------
       - name: Build Tauri App
