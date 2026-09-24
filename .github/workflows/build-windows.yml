@@ -34,7 +34,7 @@ jobs:
       - name: Build Backend Executable with PyInstaller
         run: |
           cd backend
-          pyinstaller --noconsole --onefile run_server.py --name backend-server
+          pyinstaller --noconsole --onefile --name backend-server --add-data "app;app" run_server.py
 
       # ----------------------------------------------------
       # 2. Sidecar 用ディレクトリへのバイナリ配置
@@ -42,12 +42,11 @@ jobs:
       - name: Stage Sidecar Binary for Tauri
         shell: pwsh
         run: |
-          # Tauriが要求するターゲットトリプル名（x86_64-pc-windows-msvc）を付与
           $targetTriple = "x86_64-pc-windows-msvc"
           $binDir = "frontend/src-tauri/binaries"
           New-Item -ItemType Directory -Force -Path $binDir
 
-          Copy-Item -Path "backend/dist/backend-server.exe" -Destination "$binDir/backend-server-$targetTriple.exe"
+          Copy-Item -Path "backend/dist/backend-server.exe" -Destination "$binDir/backend-server-$targetTriple.exe" -Force
           Get-ChildItem -Path $binDir
 
       # ----------------------------------------------------
@@ -88,7 +87,7 @@ jobs:
           npx tauri build
 
       # ----------------------------------------------------
-      # 6. 生成されたインストーラー・exe を Artifacts にアップロード
+      # 6. 生成されたインストーラーを Artifacts にアップロード（無圧縮で高速化）
       # ----------------------------------------------------
       - name: Upload Windows Bundle Artifacts
         uses: actions/upload-artifact@v4
@@ -97,20 +96,18 @@ jobs:
           path: |
             frontend/src-tauri/target/release/bundle/msi/*.msi
             frontend/src-tauri/target/release/bundle/nsis/*.exe
+          compression-level: 0 # 二重圧縮を回避して処理とダウンロードを高速化
           if-no-files-found: error
 
       # ----------------------------------------------------
-      # 7. GitHub Releases にアップロード
+      # 7. GitHub Releases にアップロード (CDN経由で超高速ダウンロード)
       # ----------------------------------------------------
       - name: Upload binaries to Release
+        uses: softprops/action-gh-release@v2
         if: github.event_name == 'release'
-        shell: bash
+        with:
+          files: |
+            frontend/src-tauri/target/release/bundle/msi/*.msi
+            frontend/src-tauri/target/release/bundle/nsis/*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # .msi や .exe を見つけてリリースアセットとしてアップロードする
-          for file in frontend/src-tauri/target/release/bundle/msi/*.msi frontend/src-tauri/target/release/bundle/nsis/*.exe; do
-            if [ -f "$file" ]; then
-              gh release upload ${{ github.event.release.tag_name }} "$file"
-            fi
-          done
