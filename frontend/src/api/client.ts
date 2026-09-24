@@ -125,3 +125,21 @@ export const saveCompanyFormat = async (
 export const deleteCompanyFormat = async (companyId: string): Promise<void> => {
   await apiClient.delete(`/api/formats/${companyId}`);
 };
+
+export const waitForBackend = async (
+  endpoint = "/api/formats",
+  maxRetries = 20,
+  delayMs = 500,
+): Promise<boolean> => {
+  const targetUrl = `${API_BASE_URL}${endpoint}`;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const res = await fetch(targetUrl);
+      if (res.ok) return true;
+    } catch {
+      // 接続拒否（まだ起動中）の場合は待機
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  return false;
+};

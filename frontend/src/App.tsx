@@ -7,6 +7,7 @@ import {
   exportToExcel,
   CompanySummary,
   ExtractionResponse,
+  waitForBackend,
 } from "./api/client";
 import { FormatEditor } from "./components/FormatEditor";
 import { Header } from "./components/Header";
@@ -16,7 +17,7 @@ import { ExtractionResult } from "./components/ExtractionResult";
 
 /**
  * Appの概要
- *  @returns 
+ *  @returns
  */
 export default function App() {
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
@@ -33,7 +34,16 @@ export default function App() {
   const [editorTargetId, setEditorTargetId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadCompanies();
+    const init = async () => {
+      const ready = await waitForBackend();
+      if (ready) {
+        // 起動完了後にフォーマット取得を実行
+        loadCompanies();
+      } else {
+        console.error("バックエンドの起動待機がタイムアウトしました。");
+      }
+    };
+    init();
   }, []);
 
   const loadCompanies = async () => {
