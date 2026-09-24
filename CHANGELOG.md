@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.3.0](https://github.com/Farrule/TenPla/compare/v1.2.4...v1.3.0) (2026-09-24)
+
+
+### Features
+
+* logger ([813c96f](https://github.com/Farrule/TenPla/commit/813c96fb4cdf9663c53217c93b772391686d2c3a))
+
+
+### Bug Fixes
+
+* backend ([45e9639](https://github.com/Farrule/TenPla/commit/45e9639183491988a777adf03fc71c732961310d))
+* backend task kill ([4313986](https://github.com/Farrule/TenPla/commit/4313986b18660de71e3a274ee3b43230566442c2))
+* backend timeout ([7e8fc73](https://github.com/Farrule/TenPla/commit/7e8fc73a8f2d8bd1df0d08a40131742574ad6b44))
+* build windows workflow ([68ebc99](https://github.com/Farrule/TenPla/commit/68ebc99b265fae0c4c586efd536a30d69b22bccf))
+* devtools ([b557db3](https://github.com/Farrule/TenPla/commit/b557db3699dc3a414e2bc14d874e6d720d502000))
+
 ## [1.2.4](https://github.com/Farrule/TenPla/compare/v1.2.3...v1.2.4) (2026-09-24)
 
 
