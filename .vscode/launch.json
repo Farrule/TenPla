@@ -19,21 +19,22 @@
       "preLaunchTask": "Run Tauri + Tauri Backend",
       "internalConsoleOptions": "neverOpen"
     },
+    // ビルドタスクを実行してインストーラーを生成
     {
-      "name": "Run Task: Build All (Windows)",
+      "name": "Build All from Scratch (Installer)",
       "type": "node-terminal",
       "request": "launch",
-      "command": "echo 'Build All (Windows) Finished.'",
-      "preLaunchTask": "Build All (Windows)"
+      "command": "powershell -NoProfile -Command \"Write-Host 'Build process finished successfully!' -ForegroundColor Green\"",
+      "preLaunchTask": "Build All from Scratch (Windows)"
     },
 
-    // （参考）ビルド後に生成された Tauri アプリ (.exe) をそのまま起動してデバッグ確認したい場合
+    // ビルド後に生成された exe を直接立ち上げて動作確認
     {
-      "name": "Build & Launch Tauri App (.exe)",
+      "name": "Build All & Launch App (.exe)",
       "type": "node-terminal",
       "request": "launch",
       "command": "powershell -NoProfile -Command \"& '${workspaceFolder}/frontend/src-tauri/target/release/TenPla.exe'\"",
-      "preLaunchTask": "Build All (Windows)"
+      "preLaunchTask": "Build All from Scratch (Windows)"
     }
   ]
 }

@@ -142,19 +142,36 @@
       }
     },
     {
-      "label": "Build All (Windows)",
+      "label": "Build All from Scratch (Windows)",
       "dependsOrder": "sequence",
-      "dependsOn": ["Build Backend (Sidecar)", "Build Tauri App"],
+      "dependsOn": [
+        "Setup Backend Environment",
+        "Setup Frontend Environment",
+        "Build Backend (Sidecar)",
+        "Deploy Sidecar Binary",
+        "Build Tauri App"
+      ],
       "group": {
         "kind": "build",
         "isDefault": true
       },
       "problemMatcher": []
     },
+    // 1. Python仮想環境の初期化と依存関係インストール
     {
-      "label": "Build Backend (Sidecar)",
-      "type": "shell",
-      "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Set-Location backend; .\\.venv\\Scripts\\Activate.ps1; pyinstaller --noconfirm --onefile --windowed --name backend-server --add-data 'app;app' run_server.py; New-Item -ItemType Directory -Force -Path ..\\src-tauri\\binaries; Copy-Item .\\dist\\backend-server.exe ..\\src-tauri\\binaries\\backend-server-x86_64-pc-windows-msvc.exe\"",
+      "label": "Setup Backend Environment",
+      "type": "process",
+      "command": "powershell.exe",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-Command",
+        "if (-not (Test-Path '.\\.venv')) { python -m venv .venv }; .\\.venv\\Scripts\\python.exe -m pip install --upgrade pip; .\\.venv\\Scripts\\python.exe -m pip install -r requirements.txt; .\\.venv\\Scripts\\python.exe -m pip install pyinstaller"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
       "presentation": {
         "reveal": "always",
         "panel": "shared",
@@ -162,10 +179,67 @@
       },
       "problemMatcher": []
     },
+    // 2. フロントエンドの依存関係導入
+    {
+      "label": "Setup Frontend Environment",
+      "type": "shell",
+      "command": "npm install",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    // 3. FastAPI バックエンドの Sidecar ビルド
+    {
+      "label": "Build Backend (Sidecar)",
+      "type": "process",
+      "command": "${workspaceFolder}\\backend\\.venv\\Scripts\\python.exe",
+      "args": [
+        "-m",
+        "PyInstaller",
+        "--noconfirm",
+        "--onefile",
+        "--windowed",
+        "--name",
+        "backend-server",
+        "--add-data=app;app",
+        "run_server.py"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    // 4. Tauri の binaries フォルダへリネーム配置
+    {
+      "label": "Deploy Sidecar Binary",
+      "type": "shell",
+      "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"New-Item -ItemType Directory -Force -Path frontend\\src-tauri\\binaries; Copy-Item backend\\dist\\backend-server.exe frontend\\src-tauri\\binaries\\backend-server-x86_64-pc-windows-msvc.exe -Force\"",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "close": true
+      },
+      "problemMatcher": []
+    },
+    // 5. Tauri アプリ・インストーラーのビルド
     {
       "label": "Build Tauri App",
       "type": "shell",
-      "command": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Set-Location frontend; npx tauri build\"",
+      "command": "npx tauri build",
+      "options": {
+        "cwd": "${workspaceFolder}/frontend"
+      },
       "presentation": {
         "reveal": "always",
         "panel": "shared",
