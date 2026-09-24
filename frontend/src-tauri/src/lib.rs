@@ -69,11 +69,16 @@ fn kill_process_tree(child: CommandChild) {
 
     #[cfg(target_os = "windows")]
     {
+        use std::os::windows::process::CommandExt;
+        const CREATE_NO_WINDOW: u32 = 0x08000000;
+
         // Windows: /F (強制) /T (子プロセスツリーごとキル)
-        if let Err(e) = std::process::Command::new("taskkill")
-            .args(["/F", "/T", "/PID", &pid.to_string()])
-            .output()
-        {
+        // CREATE_NO_WINDOW を指定して、アプリ終了時に一瞬ターミナルウィンドウ（黒い画面）が表示されるのを防止
+        let mut cmd = std::process::Command::new("taskkill");
+        cmd.args(["/F", "/T", "/PID", &pid.to_string()])
+            .creation_flags(CREATE_NO_WINDOW);
+
+        if let Err(e) = cmd.output() {
             log_to_file("tauri", "WARN", &format!("Failed to kill backend process tree (PID: {pid}): {e}"));
         }
     }
