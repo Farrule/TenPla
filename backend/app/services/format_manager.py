@@ -1,30 +1,29 @@
 import json
-import sys
 from pathlib import Path
 
+from app.core.logger import get_logger
+from app.core.paths import get_formats_dir
 from app.schemas import CompanyFormat, CompanySummary
+
+logger = get_logger()
 
 
 class FormatManager:
-    def __init__(self, formats_dir: str | None = None):
+    def __init__(self, formats_dir: str | Path | None = None):
         if formats_dir:
             self.formats_dir = Path(formats_dir)
         else:
-            if getattr(sys, "frozen", False):
-                # PyInstaller環境 (Tauri Sidecar: <インストール先>/binaries/backend-server.exe)
-                # sys.executable の親の親を指すことで、インストールフォルダを基準にする
-                base_dir = Path(sys.executable).resolve().parent
-            else:
-                # 開発環境: /workspace/backend/app/services/format_manager.py -> /workspace/backend
-                base_dir = Path(__file__).resolve().parents[2]
-
-            self.formats_dir = base_dir / "formats"
+            self.formats_dir = get_formats_dir()
 
         self._ensure_formats_dir()
 
     def _ensure_formats_dir(self) -> None:
         """フォーマット格納ディレクトリが存在しない場合は作成"""
-        self.formats_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.formats_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            logger.error(f"Failed to create formats directory at {self.formats_dir}: {e}", exc_info=True)
+            raise
 
     def _get_file_path(self, company_id: str) -> Path:
         """会社IDから安全なファイルパスを生成"""
@@ -34,6 +33,9 @@ class FormatManager:
     def list_formats(self) -> list[CompanySummary]:
         """登録されている会社フォーマット一覧を取得"""
         summaries = []
+        if not self.formats_dir.exists():
+            return summaries
+
         for file_path in self.formats_dir.glob("*.json"):
             try:
                 with open(file_path, "r", encoding="utf-8") as f:
@@ -45,7 +47,7 @@ class FormatManager:
                         )
                     )
             except (json.JSONDecodeError, OSError) as e:
-                print(f"[Warning] Failed to read format file {file_path}: {e}")
+                logger.warning(f"Failed to read format file {file_path.name}: {e}")
                 continue
         return summaries
 
@@ -60,20 +62,32 @@ class FormatManager:
                 data = json.load(f)
                 return CompanyFormat(**data)
         except (json.JSONDecodeError, OSError) as e:
-            print(f"[Error] Failed to load company format '{company_id}': {e}")
+            logger.error(f"Failed to load company format '{company_id}' from {file_path}: {e}", exc_info=True)
             return None
 
     def save_format(self, company_format: CompanyFormat) -> Path:
         """会社フォーマットをJSONファイルとして保存"""
+        self._ensure_formats_dir()
         file_path = self._get_file_path(company_format.company_id)
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(company_format.model_dump_json(indent=2))
-        return file_path
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(company_format.model_dump_json(indent=2))
+            logger.info(f"Successfully saved company format: {company_format.company_id}")
+            return file_path
+        except OSError as e:
+            logger.error(f"Failed to write company format file {file_path}: {e}", exc_info=True)
+            raise
 
     def delete_format(self, company_id: str) -> bool:
         """会社フォーマットを削除"""
         file_path = self._get_file_path(company_id)
         if file_path.exists():
-            file_path.unlink()
-            return True
+            try:
+                file_path.unlink()
+                logger.info(f"Successfully deleted company format: {company_id}")
+                return True
+            except OSError as e:
+                logger.error(f"Failed to delete company format file {file_path}: {e}", exc_info=True)
+                raise
         return False
+

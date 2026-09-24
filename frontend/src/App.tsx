@@ -7,16 +7,18 @@ import {
   exportToExcel,
   CompanySummary,
   ExtractionResponse,
+  waitForBackend,
 } from "./api/client";
 import { FormatEditor } from "./components/FormatEditor";
 import { Header } from "./components/Header";
 import { CompanySelector } from "./components/CompanySelector";
 import { FileUploader } from "./components/FileUploader";
 import { ExtractionResult } from "./components/ExtractionResult";
+import { logger } from "./utils/logger";
 
 /**
  * Appの概要
- *  @returns 
+ *  @returns
  */
 export default function App() {
   const [companies, setCompanies] = useState<CompanySummary[]>([]);
@@ -33,7 +35,18 @@ export default function App() {
   const [editorTargetId, setEditorTargetId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadCompanies();
+    const init = async () => {
+      const ready = await waitForBackend();
+      if (ready) {
+        // 起動完了後にフォーマット取得を実行
+        loadCompanies();
+      } else {
+        setError(
+          "バックエンドサーバーの起動確認がタイムアウトしました。サーバーが正常に起動しているかご確認ください。",
+        );
+      }
+    };
+    init();
   }, []);
 
   const loadCompanies = async () => {
@@ -59,6 +72,10 @@ export default function App() {
         setExtractResult(null);
         setError(null);
       } else {
+        logger.warn(
+          "frontend",
+          `サポート対象外のファイル形式がドロップされました: ${dropped.name}`,
+        );
         setError("PDFファイルのみ対応しています。");
       }
     }
@@ -66,14 +83,31 @@ export default function App() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setExtractResult(null);
-      setError(null);
+      const selected = e.target.files[0];
+      if (selected.type === "application/pdf" || selected.name.toLowerCase().endsWith(".pdf")) {
+        setFile(selected);
+        setExtractResult(null);
+        setError(null);
+      } else {
+        logger.warn(
+          "frontend",
+          `サポート対象外のファイル形式が選択されました: ${selected.name}`,
+        );
+        setError("PDFファイルのみ対応しています。");
+      }
     }
   };
 
   const handleExtract = async () => {
-    if (!file || !selectedCompanyId) return;
+    if (!file) {
+      setError("解析するPDFファイルを選択してください。");
+      return;
+    }
+    if (!selectedCompanyId) {
+      setError("会社フォーマットを選択してください。");
+      return;
+    }
+
     setIsExtracting(true);
     setError(null);
 
@@ -81,9 +115,9 @@ export default function App() {
       const result = await extractPdf(selectedCompanyId, file);
       setExtractResult(result);
     } catch (err: any) {
-      setError(
-        err.response?.data?.detail || "PDF解析中にエラーが発生しました。",
-      );
+      const msg =
+        err.response?.data?.detail || "PDF解析中にエラーが発生しました。";
+      setError(msg);
     } finally {
       setIsExtracting(false);
     }
@@ -115,7 +149,9 @@ export default function App() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err: any) {
-      setError("Excel出力中にエラーが発生しました。");
+      const msg =
+        err.response?.data?.detail || "Excel出力中にエラーが発生しました。";
+      setError(msg);
     } finally {
       setIsExporting(false);
     }

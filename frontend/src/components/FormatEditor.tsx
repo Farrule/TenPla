@@ -15,6 +15,7 @@ import {
   saveCompanyFormat,
   deleteCompanyFormat,
 } from "../api/client";
+import { logger } from "../utils/logger";
 
 /** FormatEditorProps のプロパティ定義 */
 interface FormatEditorProps {
@@ -136,13 +137,14 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
         const parsed = JSON.parse(content);
         // 簡単なバリデーション
         if (typeof parsed !== "object" || !Array.isArray(parsed.rules)) {
-          throw new Error("無効なフォーマットファイルです");
+          throw new Error("フォーマット形式が正しくありません (rules配列が見つかりません)");
         }
         setFormData(parsed);
         // inputをリセット
         e.target.value = "";
         setError(null);
       } catch (err: any) {
+        logger.warn("frontend", `フォーマットJSONのインポートに失敗しました: ${err.message}`);
         setError("ファイルの読み込みに失敗しました: " + err.message);
       }
     };
@@ -151,8 +153,14 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.company_id.trim()) {
+    const safeCompanyId = formData.company_id.trim();
+    if (!safeCompanyId) {
       setError("会社ID（英数字）を入力してください。");
+      return;
+    }
+    // 会社IDに使用可能な文字チェック
+    if (!/^[a-zA-Z0-9_-]+$/.test(safeCompanyId)) {
+      setError("会社IDには半角英数字、ハイフン(-)、アンダースコア(_)のみ使用できます。");
       return;
     }
     if (!formData.company_name.trim()) {
@@ -163,11 +171,12 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
     setIsSaving(true);
     setError(null);
     try {
-      await saveCompanyFormat(formData);
-      onSaved(formData.company_id);
+      await saveCompanyFormat({ ...formData, company_id: safeCompanyId });
+      onSaved(safeCompanyId);
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.detail || "保存中にエラーが発生しました。");
+      const msg = err.response?.data?.detail || "保存中にエラーが発生しました。";
+      setError(msg);
     } finally {
       setIsSaving(false);
     }
@@ -187,7 +196,8 @@ export const FormatEditor: React.FC<FormatEditorProps> = ({
       onSaved("");
       onClose();
     } catch (err: any) {
-      setError("削除に失敗しました。");
+      const msg = err.response?.data?.detail || "削除に失敗しました。";
+      setError(msg);
     }
   };
 

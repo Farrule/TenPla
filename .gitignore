@@ -17,3 +17,6 @@ backend/build/
 backend/backend-server.spec
 src-tauri/binaries/
 frontend/src-tauri/binaries/
+*.log
+logs.log
+backend/logs.log

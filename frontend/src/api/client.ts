@@ -1,17 +1,58 @@
 // frontend/src/api/client.ts
 import axios from "axios";
+import { isTauri, logger } from "../utils/logger";
 
-const isTauri =
-  typeof window !== "undefined" &&
-  ("__TAURI__" in window || "__TAURI_INTERNALS__" in window);
-
-const API_BASE_URL = isTauri
+const API_BASE_URL = isTauri()
   ? import.meta.env.VITE_API_TAURI_URL || "http://127.0.0.1:8000"
   : import.meta.env.VITE_API_WEB_URL || "http://127.0.0.1:8001";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
 });
+
+// レスポンスインターセプターでエラーを監視し、ログを振り分けて出力
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      // サーバーが2xx以外のステータスコードを返した場合 -> backend側のエラー
+      const status = error.response.status;
+      const detail =
+        error.response.data?.detail ||
+        (typeof error.response.data === "string"
+          ? error.response.data
+          : error.message);
+      const url = error.config?.url || "unknown endpoint";
+      const method = error.config?.method?.toUpperCase() || "REQUEST";
+
+      if (status >= 500) {
+        logger.error(
+          "backend",
+          `API ${method} ${url} 失敗 (HTTP ${status}): ${detail}`,
+          error,
+        );
+      } else {
+        logger.warn(
+          "backend",
+          `API ${method} ${url} クライアントエラー (HTTP ${status}): ${detail}`,
+        );
+      }
+    } else if (error.request) {
+      // リクエストは送信されたがレスポンスがない、あるいは接続拒否 -> frontend側の通信エラー
+      const url = error.config?.url || "unknown endpoint";
+      const method = error.config?.method?.toUpperCase() || "REQUEST";
+      logger.error(
+        "frontend",
+        `API ${method} ${url} への通信に失敗しました。サーバーが停止しているか到達不能です。`,
+        error,
+      );
+    } else {
+      // リクエスト設定中のエラー
+      logger.error("frontend", `リクエスト設定エラー: ${error.message}`, error);
+    }
+    return Promise.reject(error);
+  },
+);
 
 /** ExtractedFieldResult のプロパティ定義 */
 export interface ExtractedFieldResult {
@@ -125,3 +166,26 @@ export const saveCompanyFormat = async (
 export const deleteCompanyFormat = async (companyId: string): Promise<void> => {
   await apiClient.delete(`/api/formats/${companyId}`);
 };
+
+export const waitForBackend = async (
+  endpoint = "/api/formats",
+  maxRetries = 20,
+  delayMs = 500,
+): Promise<boolean> => {
+  const targetUrl = `${API_BASE_URL}${endpoint}`;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const res = await fetch(targetUrl);
+      if (res.ok) return true;
+    } catch {
+      // 接続拒否（まだ起動中）の場合は待機
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  logger.error(
+    "frontend",
+    `バックエンドの起動待機がタイムアウトしました (${targetUrl})`,
+  );
+  return false;
+};
+
