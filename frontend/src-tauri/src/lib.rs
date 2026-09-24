@@ -108,12 +108,22 @@ fn get_app_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
+/// 指定されたファイルパスのバイナリデータを読み込み、フロントエンドに返却
+#[tauri::command]
+fn read_file_binary(file_path: String) -> Result<Vec<u8>, String> {
+    std::fs::read(&file_path).map_err(|e| format!("Failed to read file '{file_path}': {e}"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .manage(BackendChild(Mutex::new(None)))
-        .invoke_handler(tauri::generate_handler![log_message, get_app_version])
+        .invoke_handler(tauri::generate_handler![
+            log_message,
+            get_app_version,
+            read_file_binary
+        ])
         .setup(|app| {
             #[cfg(debug_assertions)]
             app.handle().plugin(

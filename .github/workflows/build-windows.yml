@@ -166,7 +166,7 @@ jobs:
             frontend/src-tauri/target/release/bundle/nsis/*.exe
           prerelease: false
           # すでに同名のアセットが存在する場合は上書き
-          overwrite: true
+          overwrite_files: true
           # 該当タグの Release がまだ存在しない場合は自動作成
           make_latest: ${{ steps.resolve-tag.outputs.tag_name == 'latest' && 'true' || 'false' }}
         env:
