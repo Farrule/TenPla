@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/Farrule/TenPla/compare/v1.3.0...v1.3.1) (2026-09-24)
+
+
+### Bug Fixes
+
+* build windows workflow release pages ([c6b180a](https://github.com/Farrule/TenPla/commit/c6b180a54538ddbd2ba5d99d5681ec0ab1f71733))
+
 ## [1.3.0](https://github.com/Farrule/TenPla/compare/v1.2.4...v1.3.0) (2026-09-24)
 
 
