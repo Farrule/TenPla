@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/Farrule/TenPla/compare/1.4.1...v1.4.2) (2026-09-25)
+
+
+### Bug Fixes
+
+* pdf drag and drop notification duplicate ([ff7408b](https://github.com/Farrule/TenPla/commit/ff7408b061c248cd77177398fb0064d364e210e2))
+
 ## [1.4.1](https://github.com/Farrule/TenPla/compare/1.4.0...v1.4.1) (2026-09-24)
 
 
