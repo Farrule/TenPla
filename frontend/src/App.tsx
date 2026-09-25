@@ -1,5 +1,5 @@
 // frontend/src/App.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { AlertCircle } from "lucide-react";
 import {
   fetchCompanies,
@@ -16,7 +16,7 @@ import { FileUploader } from "./components/FileUploader";
 import { ExtractionResult } from "./components/ExtractionResult";
 import { useNotification } from "./context/NotificationContext";
 import { logger } from "./utils/logger";
-import { createPdfFileFromPath } from "./utils/tauriFile";
+import { createPdfFileFromPath, getFileNameFromPath } from "./utils/tauriFile";
 import { Footer } from "./components/Footer";
 
 /**
@@ -54,6 +54,26 @@ export default function App() {
     init();
   }, []);
 
+  // ファイルドロップの二重処理・重複通知防止用の参照
+  const lastProcessedFileRef = useRef<{ name: string; timestamp: number }>({
+    name: "",
+    timestamp: 0,
+  });
+  const isProcessingFileRef = useRef(false);
+
+  const isDuplicateFileAction = (fileName: string): boolean => {
+    const now = Date.now();
+    if (
+      isProcessingFileRef.current ||
+      (lastProcessedFileRef.current.name === fileName &&
+        now - lastProcessedFileRef.current.timestamp < 1000)
+    ) {
+      return true;
+    }
+    lastProcessedFileRef.current = { name: fileName, timestamp: now };
+    return false;
+  };
+
   // ドロップされたファイルパス（Tauriネイティブ）からPDFを読み込む処理
   const handlePdfPathDrop = async (rawPath: string) => {
     if (!rawPath.toLowerCase().endsWith(".pdf")) {
@@ -67,6 +87,12 @@ export default function App() {
       return;
     }
 
+    const fileName = getFileNameFromPath(rawPath);
+    if (isDuplicateFileAction(fileName)) {
+      return;
+    }
+
+    isProcessingFileRef.current = true;
     try {
       const loadedFile = await createPdfFileFromPath(rawPath);
       setFile(loadedFile);
@@ -85,58 +111,21 @@ export default function App() {
       const msg = "ファイルの読み込みに失敗しました。";
       setError(msg);
       notifyError(msg, "エラー");
+    } finally {
+      isProcessingFileRef.current = false;
     }
   };
 
   // Tauriネイティブのファイルドラッグ＆ドロップイベント監視
   useEffect(() => {
+    let isMounted = true;
     const unlisteners: Array<() => void> = [];
 
     const setupTauriDropListener = async () => {
       const win = window as any;
+      let registered = false;
 
-      // 1. tauri://drag-drop イベントリスナー (Tauri v2)
-      const listenFn =
-        win.__TAURI__?.event?.listen || win.__TAURI_INTERNALS__?.listen;
-
-      if (listenFn) {
-        try {
-          const unlisten1 = await listenFn(
-            "tauri://drag-drop",
-            (event: any) => {
-              const paths: string[] =
-                event.payload?.paths ||
-                (Array.isArray(event.payload) ? event.payload : []);
-              if (paths.length > 0) {
-                handlePdfPathDrop(paths[0]);
-              }
-            },
-          );
-          unlisteners.push(unlisten1);
-        } catch (e) {
-          console.warn("Tauri tauri://drag-drop listener error:", e);
-        }
-
-          try {
-          // Tauri v1/フォールバック用の tauri://file-drop
-          const unlisten2 = await listenFn(
-            "tauri://file-drop",
-            (event: any) => {
-              const paths: string[] = Array.isArray(event.payload)
-                ? event.payload
-                : event.payload?.paths || [];
-              if (paths.length > 0) {
-                handlePdfPathDrop(paths[0]);
-              }
-            },
-          );
-          unlisteners.push(unlisten2);
-        } catch (e) {
-          // 無視
-        }
-      }
-
-      // 2. getCurrentWebviewWindow の onDragDropEvent
+      // 1. getCurrentWebviewWindow の onDragDropEvent (Tauri v2 推奨)
       const getCurrentWindow =
         win.__TAURI__?.webviewWindow?.getCurrentWebviewWindow;
       if (getCurrentWindow) {
@@ -153,10 +142,70 @@ export default function App() {
                 }
               },
             );
-            unlisteners.push(unlistenWindow);
+            if (!isMounted) {
+              unlistenWindow();
+            } else {
+              unlisteners.push(unlistenWindow);
+              registered = true;
+            }
           }
         } catch (e) {
           console.warn("Tauri onDragDropEvent listener error:", e);
+        }
+      }
+
+      // 2. onDragDropEvent が利用できない場合のみ listen をフォールバックとして試行
+      if (!registered) {
+        const listenFn =
+          win.__TAURI__?.event?.listen || win.__TAURI_INTERNALS__?.listen;
+
+        if (listenFn) {
+          try {
+            // Tauri v2 の "tauri://drag-drop"
+            const unlisten = await listenFn(
+              "tauri://drag-drop",
+              (event: any) => {
+                const paths: string[] =
+                  event.payload?.paths ||
+                  (Array.isArray(event.payload) ? event.payload : []);
+                if (paths.length > 0) {
+                  handlePdfPathDrop(paths[0]);
+                }
+              },
+            );
+            if (!isMounted) {
+              unlisten();
+            } else {
+              unlisteners.push(unlisten);
+              registered = true;
+            }
+          } catch (e) {
+            console.warn("Tauri tauri://drag-drop listener error:", e);
+          }
+
+          if (!registered) {
+            try {
+              // Tauri v1 の "tauri://file-drop"
+              const unlisten = await listenFn(
+                "tauri://file-drop",
+                (event: any) => {
+                  const paths: string[] = Array.isArray(event.payload)
+                    ? event.payload
+                    : event.payload?.paths || [];
+                  if (paths.length > 0) {
+                    handlePdfPathDrop(paths[0]);
+                  }
+                },
+              );
+              if (!isMounted) {
+                unlisten();
+              } else {
+                unlisteners.push(unlisten);
+              }
+            } catch (e) {
+              // 無視
+            }
+          }
         }
       }
     };
@@ -164,7 +213,14 @@ export default function App() {
     setupTauriDropListener();
 
     return () => {
-      unlisteners.forEach((fn) => fn());
+      isMounted = false;
+      unlisteners.forEach((fn) => {
+        try {
+          fn();
+        } catch (e) {
+          // ignore
+        }
+      });
     };
   }, []);
 
@@ -187,7 +243,13 @@ export default function App() {
     e.preventDefault();
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const dropped = e.dataTransfer.files[0];
-      if (dropped.type === "application/pdf" || dropped.name.endsWith(".pdf")) {
+      if (
+        dropped.type === "application/pdf" ||
+        dropped.name.toLowerCase().endsWith(".pdf")
+      ) {
+        if (isDuplicateFileAction(dropped.name)) {
+          return;
+        }
         setFile(dropped);
         setExtractResult(null);
         setError(null);

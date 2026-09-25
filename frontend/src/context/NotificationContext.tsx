@@ -1,5 +1,5 @@
 // frontend/src/context/NotificationContext.tsx
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, useRef, ReactNode } from "react";
 import { NotificationItem, NotificationModal, NotificationType } from "../components/NotificationModal";
 
 interface NotificationContextType {
@@ -13,6 +13,11 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  // 短時間の同一通知重複防止用
+  const lastNotificationRef = useRef<{ key: string; timestamp: number }>({
+    key: "",
+    timestamp: 0,
+  });
 
   const removeNotification = useCallback((id: string) => {
     setNotifications((prev) => prev.filter((item) => item.id !== id));
@@ -20,11 +25,24 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   const notify = useCallback(
     (type: NotificationType, message: string, title?: string, duration = 4000) => {
-      const id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      const resolvedTitle = title || (type === "success" ? "完了" : "エラー");
+      const key = `${type}:${resolvedTitle}:${message}`;
+      const now = Date.now();
+
+      // 同一内容の通知が短時間（500ms以内）に連続して発行された場合は重複として無視
+      if (
+        lastNotificationRef.current.key === key &&
+        now - lastNotificationRef.current.timestamp < 500
+      ) {
+        return;
+      }
+      lastNotificationRef.current = { key, timestamp: now };
+
+      const id = `${now}-${Math.random().toString(36).substring(2, 9)}`;
       const newItem: NotificationItem = {
         id,
         type,
-        title: title || (type === "success" ? "完了" : "エラー"),
+        title: resolvedTitle,
         message,
       };
 
